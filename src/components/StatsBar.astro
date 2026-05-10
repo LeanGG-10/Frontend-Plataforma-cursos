@@ -1,0 +1,21 @@
+---
+const stats = [
+  { value: '500+', label: 'Libros Digitales' },
+  { value: '25k+', label: 'Estudiantes' },
+  { value: '12', label: 'Países' },
+  { value: '98%', label: 'Satisfacción' },
+];
+---
+
+<section class="bg-secondary w-full py-12 md:py-20">
+  <div class="container mx-auto px-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-0">
+      {stats.map((stat, index) => (
+        <div class={`flex flex-col items-center justify-center text-primary text-center px-4 ${index !== stats.length - 1 ? 'md:border-r border-primary/20' : ''}`}>
+          <span class="text-4xl md:text-6xl font-display font-light mb-2 tracking-tighter">{stat.value}</span>
+          <span class="text-xs md:text-sm font-body uppercase tracking-[0.2em] font-bold opacity-80">{stat.label}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

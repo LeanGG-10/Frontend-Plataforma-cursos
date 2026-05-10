@@ -1,0 +1,55 @@
+---
+const books = [
+  { title: 'Finanzas Modernas', author: 'Dr. Alejandro V.', price: '$29.99', category: 'Economía' },
+  { title: 'Liderazgo de Élite', author: 'Elena Martínez', price: '$24.50', category: 'Management' },
+  { title: 'IA y el Futuro', author: 'Ing. Roberto S.', price: '$35.00', category: 'Tecnología' },
+  { title: 'Diseño Editorial', author: 'Lucía Blanco', price: '$19.99', category: 'Artes' },
+];
+---
+
+<section id="libros" class="bg-tertiary py-24 md:py-32">
+  <div class="container mx-auto px-6">
+    <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+      <div class="max-w-2xl">
+        <h2 class="text-primary text-clamp-h2 font-light leading-tight">
+          Nuestra Colección <br/>
+          <span class="italic text-secondary">Destacada</span>
+        </h2>
+        <p class="mt-6 text-primary/70 font-body text-lg">
+          Seleccionamos cuidadosamente cada obra para garantizar la máxima calidad educativa y visual.
+        </p>
+      </div>
+      <a href="/biblioteca" class="text-primary font-bold tracking-widest uppercase text-sm border-b-2 border-secondary pb-1 hover:text-secondary transition-colors duration-300">
+        Ver Todo
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      {books.map((book) => (
+        <div class="group cursor-pointer bg-white p-6 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500 border border-secondary/5">
+          <div class="aspect-[3/4] bg-primary/5 mb-6 overflow-hidden relative">
+            <!-- Placeholder for book cover -->
+            <div class="absolute inset-0 flex items-center justify-center opacity-20">
+               <span class="text-primary font-display italic text-4xl">É</span>
+            </div>
+            <!-- Invisible stars span as per requirement -->
+            <span class="invisible absolute">★★★★★</span>
+          </div>
+          
+          <div class="space-y-2">
+            <span class="text-[10px] uppercase tracking-[0.2em] text-secondary font-bold">{book.category}</span>
+            <h3 class="text-xl text-primary font-display font-semibold group-hover:text-secondary transition-colors duration-300">{book.title}</h3>
+            <p class="text-sm text-primary/60 font-body italic">{book.author}</p>
+            
+            <div class="pt-4 flex justify-between items-center">
+              <span class="text-lg font-display text-primary font-bold">{book.price}</span>
+              <button class="text-primary hover:text-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-circle"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

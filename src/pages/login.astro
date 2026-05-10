@@ -1,0 +1,334 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+import logoLight from '../assets/logo-light-transparent.png';
+import logoPrimary from '../assets/logo-primary.png';
+import Button from '../components/ui/Button.astro';
+---
+
+<Layout title="Autenticación | Élite Educativa">
+  <main class="h-screen w-full flex overflow-hidden bg-tertiary">
+    <!-- Branding Panel (Izquierdo) -->
+    <section class="hidden lg:flex w-1/2 bg-primary relative flex-col items-center justify-center p-12 overflow-hidden">
+      <!-- Gradient Border -->
+      <div class="absolute right-0 top-0 w-[1px] h-full bg-gradient-to-b from-transparent via-secondary/30 to-transparent"></div>
+      
+      <!-- Radial Glow & Grid -->
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(201,164,74,0.1),transparent_70%)] pointer-events-none"></div>
+      <div class="absolute inset-0 dark-grid-pattern opacity-[0.045] pointer-events-none"></div>
+      
+      <div class="relative z-10 flex flex-col items-center text-center">
+        <a href="/" class="mb-12 hover:opacity-80 transition-opacity">
+          <Image src={logoLight} alt="Logo" width={200} class="h-auto" />
+        </a>
+        
+        <h1 class="text-tertiary text-5xl xl:text-6xl font-light leading-tight">
+          Tu puerta a la <br/>
+          <span class="italic text-secondary">Excelencia</span> Académica
+        </h1>
+        
+        <div class="mt-12 w-24 h-[1px] bg-secondary/30"></div>
+        
+        <p class="mt-8 text-tertiary/40 font-body text-sm tracking-widest uppercase font-medium">
+          Formando para el Futuro
+        </p>
+      </div>
+
+      <!-- Decorative Arch -->
+      <div class="absolute -bottom-20 -left-20 w-80 h-80 border-[1px] border-secondary/10 rounded-full pointer-events-none"></div>
+    </section>
+
+    <!-- Form Panel (Derecho) -->
+    <section class="w-full lg:w-1/2 h-full flex items-center justify-center p-6 md:p-12 relative overflow-hidden">
+      <!-- Decorative Arches -->
+      <div class="absolute top-0 right-0 w-64 h-64 border-r border-t border-secondary/10 rounded-tr-[100px] pointer-events-none"></div>
+      <div class="absolute bottom-0 left-0 w-64 h-64 border-l border-b border-secondary/10 rounded-bl-[100px] pointer-events-none"></div>
+
+      <div class="w-full max-w-[400px] relative z-10">
+        <!-- Logo for mobile -->
+        <div class="lg:hidden flex justify-center mb-12">
+          <Image src={logoPrimary} alt="Logo" width={180} />
+        </div>
+
+        <!-- Login View -->
+        <div id="login-view" class="auth-view transition-opacity duration-300">
+          <div class="mb-10">
+            <h2 class="text-3xl font-display text-primary mb-2">Bienvenido de nuevo</h2>
+            <p class="text-primary/50 text-sm font-body">Ingresa tus credenciales para acceder.</p>
+          </div>
+
+          <form id="login-form" class="space-y-8" novalidate>
+            <div class="group relative">
+              <label for="login-email" class="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Correo Electrónico</label>
+              <input 
+                type="email" 
+                id="login-email" 
+                name="email"
+                placeholder="ejemplo@elite.com"
+                class="w-full bg-transparent border-b border-primary/10 py-3 outline-none focus:border-secondary transition-all font-body text-primary placeholder:text-primary/20"
+              />
+              <span class="error-msg text-[11px] text-red-500 mt-1 hidden">Correo electrónico no válido</span>
+            </div>
+
+            <div class="group relative">
+              <label for="login-password" class="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Contraseña</label>
+              <div class="relative">
+                <input 
+                  type="password" 
+                  id="login-password" 
+                  name="password"
+                  placeholder="••••••••"
+                  maxlength="12"
+                  class="w-full bg-transparent border-b border-primary/10 py-3 outline-none focus:border-secondary transition-all font-body text-primary placeholder:text-primary/20"
+                />
+                <button type="button" class="toggle-password absolute right-0 top-1/2 -translate-y-1/2 text-primary/30 hover:text-secondary transition-colors p-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+              <span class="error-msg text-[11px] text-red-500 mt-1 hidden">La contraseña es obligatoria (máx 12 caracteres)</span>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+              <label class="flex items-center gap-2 cursor-pointer group">
+                <input type="checkbox" class="accent-secondary h-4 w-4" />
+                <span class="text-xs text-primary/50 group-hover:text-primary transition-colors">Recordarme</span>
+              </label>
+              <a href="#" class="text-xs text-secondary font-bold hover:underline">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <Button type="submit" class="w-full py-4 mt-4">
+              Iniciar Sesión
+            </Button>
+          </form>
+
+          <p class="mt-8 text-center text-sm text-primary/40 font-body">
+            ¿No tienes una cuenta? 
+            <button id="show-register" class="text-secondary font-bold hover:underline ml-1">Regístrate</button>
+          </p>
+        </div>
+
+        <!-- Register View -->
+        <div id="register-view" class="auth-view hidden opacity-0 transition-opacity duration-300">
+          <div class="mb-10">
+            <h2 class="text-3xl font-display text-primary mb-2">Crear Cuenta</h2>
+            <p class="text-primary/50 text-sm font-body">Únete a la élite educativa hoy mismo.</p>
+          </div>
+
+          <form id="register-form" class="space-y-6" novalidate>
+            <div class="group relative">
+              <label for="reg-name" class="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Nombre Completo</label>
+              <input 
+                type="text" 
+                id="reg-name" 
+                name="name"
+                placeholder="Juan Pérez"
+                class="w-full bg-transparent border-b border-primary/10 py-3 outline-none focus:border-secondary transition-all font-body text-primary placeholder:text-primary/20"
+              />
+              <span class="error-msg text-[11px] text-red-500 mt-1 hidden">El nombre es obligatorio</span>
+            </div>
+
+            <div class="group relative">
+              <label for="reg-email" class="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Correo Electrónico</label>
+              <input 
+                type="email" 
+                id="reg-email" 
+                name="email"
+                placeholder="ejemplo@elite.com"
+                class="w-full bg-transparent border-b border-primary/10 py-3 outline-none focus:border-secondary transition-all font-body text-primary placeholder:text-primary/20"
+              />
+              <span class="error-msg text-[11px] text-red-500 mt-1 hidden">Correo electrónico no válido</span>
+            </div>
+
+            <div class="group relative">
+              <label for="reg-password" class="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Contraseña</label>
+              <div class="relative">
+                <input 
+                  type="password" 
+                  id="reg-password" 
+                  name="password"
+                  placeholder="Min. 6 caracteres, máx. 12"
+                  maxlength="12"
+                  class="w-full bg-transparent border-b border-primary/10 py-3 outline-none focus:border-secondary transition-all font-body text-primary placeholder:text-primary/20"
+                />
+                <button type="button" class="toggle-password absolute right-0 top-1/2 -translate-y-1/2 text-primary/30 hover:text-secondary transition-colors p-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+              <span class="error-msg text-[11px] text-red-500 mt-1 hidden">La contraseña debe tener entre 6 y 12 caracteres</span>
+            </div>
+
+            <div class="group relative">
+              <label for="reg-confirm" class="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Confirmar Contraseña</label>
+              <input 
+                type="password" 
+                id="reg-confirm" 
+                placeholder="Repite tu contraseña"
+                maxlength="12"
+                class="w-full bg-transparent border-b border-primary/10 py-3 outline-none focus:border-secondary transition-all font-body text-primary placeholder:text-primary/20"
+              />
+              <span class="error-msg text-[11px] text-red-500 mt-1 hidden">Las contraseñas no coinciden</span>
+            </div>
+
+            <Button type="submit" class="w-full py-4 mt-4">
+              Crear Cuenta
+            </Button>
+          </form>
+
+          <p class="mt-8 text-center text-sm text-primary/40 font-body">
+            ¿Ya tienes una cuenta? 
+            <button id="show-login" class="text-secondary font-bold hover:underline ml-1">Inicia Sesión</button>
+          </p>
+        </div>
+      </div>
+
+      <!-- Bottom link back to home -->
+      <a href="/" class="absolute bottom-8 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.3em] font-bold text-primary/30 hover:text-secondary transition-colors">
+        Volver al Inicio
+      </a>
+    </section>
+  </main>
+</Layout>
+
+<script>
+  // DOM Elements with type casting for TypeScript safety
+  const loginView = document.getElementById('login-view') as HTMLElement;
+  const registerView = document.getElementById('register-view') as HTMLElement;
+  const showRegisterBtn = document.getElementById('show-register') as HTMLElement;
+  const showLoginBtn = document.getElementById('show-login') as HTMLElement;
+  const togglePassBtns = document.querySelectorAll('.toggle-password');
+  
+  const loginForm = document.getElementById('login-form') as HTMLFormElement;
+  const registerForm = document.getElementById('register-form') as HTMLFormElement;
+
+  // Functions
+  function switchView(toRegister: boolean) {
+    if (toRegister) {
+      loginView.classList.add('opacity-0');
+      setTimeout(() => {
+        loginView.classList.add('hidden');
+        registerView.classList.remove('hidden');
+        setTimeout(() => registerView.classList.remove('opacity-0'), 50);
+      }, 300);
+      window.location.hash = 'register';
+    } else {
+      registerView.classList.add('opacity-0');
+      setTimeout(() => {
+        registerView.classList.add('hidden');
+        loginView.classList.remove('hidden');
+        setTimeout(() => loginView.classList.remove('opacity-0'), 50);
+      }, 300);
+      window.location.hash = '';
+    }
+  }
+
+  // Toggle Password Visibility
+  togglePassBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = btn.previousElementSibling as HTMLInputElement;
+      const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+      input.setAttribute('type', type);
+      
+      btn.innerHTML = type === 'text' 
+        ? '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88 12 12l2.12 2.12M15.12 15.12 17 17M2 12l2-2m6-2 2-2 3 3M19 12l3 3M3 3l18 18"/></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+    });
+  });
+
+  // Validation Logic
+  function validateEmail(email: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function showError(input: HTMLInputElement, show: boolean) {
+    const group = input.closest('.group');
+    if (!group) return;
+    const errorMsg = group.querySelector('.error-msg');
+    if (show) {
+      errorMsg?.classList.remove('hidden');
+      input.classList.add('border-red-500');
+    } else {
+      errorMsg?.classList.add('hidden');
+      input.classList.remove('border-red-500');
+    }
+  }
+
+  // Event Listeners
+  showRegisterBtn.addEventListener('click', () => switchView(true));
+  showLoginBtn.addEventListener('click', () => switchView(false));
+
+  // Handle Hash on Load
+  if (window.location.hash === '#register') {
+    switchView(true);
+  }
+
+  // Form Submission
+  loginForm.addEventListener('submit', (e: SubmitEvent) => {
+    e.preventDefault();
+    let isValid = true;
+    
+    const email = document.getElementById('login-email') as HTMLInputElement;
+    const pass = document.getElementById('login-password') as HTMLInputElement;
+
+    if (!validateEmail(email.value)) {
+      showError(email, true);
+      isValid = false;
+    } else {
+      showError(email, false);
+    }
+
+    if (pass.value.length === 0 || pass.value.length > 12) {
+      showError(pass, true);
+      isValid = false;
+    } else {
+      showError(pass, false);
+    }
+
+    if (isValid) {
+      console.log('Login attempt:', { email: email.value });
+      /* TODO: conectar con el backend de NestJS */
+    }
+  });
+
+  registerForm.addEventListener('submit', (e: SubmitEvent) => {
+    e.preventDefault();
+    let isValid = true;
+
+    const name = document.getElementById('reg-name') as HTMLInputElement;
+    const email = document.getElementById('reg-email') as HTMLInputElement;
+    const pass = document.getElementById('reg-password') as HTMLInputElement;
+    const confirm = document.getElementById('reg-confirm') as HTMLInputElement;
+
+    if (name.value.trim().length < 3) {
+      showError(name, true);
+      isValid = false;
+    } else {
+      showError(name, false);
+    }
+
+    if (!validateEmail(email.value)) {
+      showError(email, true);
+      isValid = false;
+    } else {
+      showError(email, false);
+    }
+
+    if (pass.value.length < 6 || pass.value.length > 12) {
+      showError(pass, true);
+      isValid = false;
+    } else {
+      showError(pass, false);
+    }
+
+    if (pass.value !== confirm.value) {
+      showError(confirm, true);
+      isValid = false;
+    } else {
+      showError(confirm, false);
+    }
+
+    if (isValid) {
+      console.log('Register attempt:', { name: name.value, email: email.value });
+      /* TODO: conectar con el backend de NestJS */
+    }
+  });
+</script>

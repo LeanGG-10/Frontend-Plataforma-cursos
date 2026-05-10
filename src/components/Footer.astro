@@ -1,0 +1,78 @@
+---
+import { Image } from 'astro:assets';
+import logoLight from '../assets/logo-light-transparent.png';
+import logoIcon from '../assets/logo-icon-light-transparent.png';
+import Button from './ui/Button.astro';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="bg-navy-dark pt-24 pb-12 relative overflow-hidden">
+  <div class="container mx-auto px-6 relative z-10">
+    <!-- CTA Section -->
+    <div class="border border-secondary/20 p-12 md:p-20 text-center mb-24 relative group">
+      <div class="absolute inset-0 bg-secondary/0 group-hover:bg-secondary/[0.02] transition-all duration-700"></div>
+      <h2 class="text-tertiary text-clamp-h2 font-light mb-8 italic">¿Listo para elevar tu conocimiento?</h2>
+      <p class="text-tertiary/60 font-body text-lg max-w-xl mx-auto mb-12 font-light">
+        Únete a nuestra comunidad exclusiva y accede a los mejores recursos educativos digitales.
+      </p>
+      <Button 
+        href="/login#register" 
+        variant="primary" 
+        class="!px-12 !py-5"
+      >
+        Comenzar Ahora
+      </Button>
+    </div>
+
+    <!-- Footer Links -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-16 pb-20 border-b border-secondary/10">
+      <div class="md:col-span-1">
+        <Image src={logoLight} alt="Élite Educativa" height={32} class="h-8 w-auto mb-8" />
+        <p class="text-tertiary/40 text-sm leading-relaxed font-light">
+          Excelencia académica y diseño editorial para la formación de los líderes del futuro.
+        </p>
+      </div>
+
+      <div>
+        <h4 class="text-tertiary font-display text-lg mb-6">Plataforma</h4>
+        <ul class="space-y-4 text-sm text-tertiary/50 font-body">
+          <li><a href="#" class="hover:text-secondary transition-colors">Biblioteca</a></li>
+          <li><a href="#" class="hover:text-secondary transition-colors">Cursos Online</a></li>
+          <li><a href="#" class="hover:text-secondary transition-colors">Membresías</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-tertiary font-display text-lg mb-6">Compañía</h4>
+        <ul class="space-y-4 text-sm text-tertiary/50 font-body">
+          <li><a href="#" class="hover:text-secondary transition-colors">Sobre Nosotros</a></li>
+          <li><a href="#" class="hover:text-secondary transition-colors">Contacto</a></li>
+          <li><a href="#" class="hover:text-secondary transition-colors">Términos y Condiciones</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-tertiary font-display text-lg mb-6">Síguenos</h4>
+        <div class="flex space-x-6 text-tertiary/50">
+           <a href="#" class="hover:text-secondary transition-colors">Instagram</a>
+           <a href="#" class="hover:text-secondary transition-colors">LinkedIn</a>
+           <a href="#" class="hover:text-secondary transition-colors">Twitter</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Credits -->
+    <div class="pt-12 flex flex-col md:flex-row justify-between items-center gap-8">
+      <div class="flex items-center gap-4">
+        <Image src={logoIcon} alt="Icon" height={24} class="h-6 w-auto opacity-50" />
+        <span class="text-tertiary/30 text-[10px] tracking-[0.2em] uppercase font-bold">
+          © {year} Élite Educativa. Todos los derechos reservados.
+        </span>
+      </div>
+      <div class="text-tertiary/30 text-[10px] tracking-[0.2em] uppercase font-bold">
+        Made with Excellence
+      </div>
+    </div>
+  </div>
+</footer>

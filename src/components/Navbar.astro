@@ -1,0 +1,37 @@
+---
+import { Image } from 'astro:assets';
+import logoLight from '../assets/logo-light-transparent.png';
+import Button from './ui/Button.astro';
+
+const navLinks = [
+  { name: 'Inicio', href: '/' },
+  { name: 'Libros', href: '#libros' },
+  { name: 'Cursos', href: '#cursos' },
+  { name: 'Sobre Nosotros', href: '#nosotros' },
+];
+---
+
+<nav class="fixed top-0 left-0 w-full h-[72px] bg-primary border-b border-secondary/25 z-50 flex items-center px-6 md:px-12 justify-between">
+  <div class="flex items-center">
+    <a href="/" class="flex items-center">
+      <Image src={logoLight} alt="Élite Educativa Logo" height={40} class="h-10 w-auto" />
+    </a>
+  </div>
+
+  <div class="hidden md:flex items-center space-x-8">
+    {navLinks.map(link => (
+      <a 
+        href={link.href} 
+        class="text-tertiary/80 hover:text-secondary transition-colors duration-300 font-body text-sm tracking-widest uppercase font-medium"
+      >
+        {link.name}
+      </a>
+    ))}
+  </div>
+
+  <div class="flex items-center space-x-4">
+    <Button href="/login" variant="outline" class="!px-6 !py-2 !text-xs">
+      Ingresar
+    </Button>
+  </div>
+</nav>
