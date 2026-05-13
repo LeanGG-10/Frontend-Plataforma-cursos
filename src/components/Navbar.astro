@@ -5,7 +5,7 @@ import Button from './ui/Button.astro';
 
 const navLinks = [
   { name: 'Inicio', href: '/' },
-  { name: 'Libros', href: '#libros' },
+  { name: 'Libros', href: '/libros' },
   { name: 'Cursos', href: '#cursos' },
   { name: 'Sobre Nosotros', href: '#nosotros' },
 ];
@@ -13,7 +13,7 @@ const navLinks = [
 
 <nav class="fixed top-0 left-0 w-full h-[72px] bg-primary border-b border-secondary/25 z-50 flex items-center px-6 md:px-12 justify-between">
   <div class="flex items-center">
-    <a href="/" class="flex items-center">
+    <a href="/" class="flex items-center cursor-pointer transition-opacity duration-200 hover:opacity-80">
       <Image src={logoLight} alt="Élite Educativa Logo" height={40} class="h-10 w-auto" />
     </a>
   </div>
@@ -22,7 +22,7 @@ const navLinks = [
     {navLinks.map(link => (
       <a 
         href={link.href} 
-        class="text-tertiary/80 hover:text-secondary transition-colors duration-300 font-body text-sm tracking-widest uppercase font-medium"
+        class="text-tertiary/80 hover:text-secondary transition-colors duration-200 font-body text-sm tracking-widest uppercase font-medium cursor-pointer"
       >
         {link.name}
       </a>
@@ -30,8 +30,37 @@ const navLinks = [
   </div>
 
   <div class="flex items-center space-x-4">
-    <Button href="/login" variant="outline" class="!px-6 !py-2 !text-xs">
+    <Button href="/login" variant="outline" class="!px-6 !py-2 !text-xs" id="nav-auth-btn">
       Ingresar
     </Button>
   </div>
 </nav>
+
+<script>
+  import { authService } from '../services/auth.service';
+
+  function updateAuthButton() {
+    const authBtn = document.getElementById('nav-auth-btn');
+    
+    if (authBtn && authService.isAuthenticated()) {
+      authBtn.textContent = 'Cerrar Sesión';
+      // Change href to avoid navigation and handle logout via script
+      authBtn.setAttribute('href', '#');
+      
+      authBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        authService.logout();
+        // The logout method in authService already redirects to /login
+      });
+
+      // Update styles for a more "logout" feel if desired
+      authBtn.classList.add('hover:bg-red-500/10', 'hover:text-red-500', 'hover:border-red-500/50');
+    }
+  }
+
+  // Run on load
+  updateAuthButton();
+
+  // Listen for custom events if session state changes without reload
+  window.addEventListener('storage', () => updateAuthButton());
+</script>

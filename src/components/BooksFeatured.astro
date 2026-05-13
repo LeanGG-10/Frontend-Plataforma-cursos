@@ -1,0 +1,34 @@
+---
+import BookCard from './BookCard.astro';
+import booksData from '../data/mock-books.json';
+
+const featuredBooks = booksData.slice(0, 4);
+---
+
+<section id="libros" class="bg-tertiary py-24 md:py-32">
+  <div class="container mx-auto px-6">
+    <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+      <div class="max-w-2xl">
+        <h2 class="text-primary text-clamp-h2 font-light leading-tight">
+          Nuestra Colección <br/>
+          <span class="italic text-secondary">Destacada</span>
+        </h2>
+        <p class="mt-6 text-primary/70 font-body text-lg">
+          Seleccionamos cuidadosamente cada obra para garantizar la máxima calidad educativa y visual.
+        </p>
+      </div>
+      <a 
+        href="/libros" 
+        class="text-primary font-bold tracking-widest uppercase text-sm border-b-2 border-secondary pb-1 hover:text-secondary transition-colors duration-200 cursor-pointer"
+      >
+        Ver todos los libros
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      {featuredBooks.map((book) => (
+        <BookCard {...book} />
+      ))}
+    </div>
+  </div>
+</section>

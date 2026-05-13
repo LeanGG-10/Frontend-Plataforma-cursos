@@ -5,21 +5,22 @@ import logoIcon from '../assets/logo-icon-light-transparent.png';
 import Button from './ui/Button.astro';
 
 const year = new Date().getFullYear();
+
 ---
 
 <footer class="bg-navy-dark pt-24 pb-12 relative overflow-hidden">
   <div class="container mx-auto px-6 relative z-10">
     <!-- CTA Section -->
     <div class="border border-secondary/20 p-12 md:p-20 text-center mb-24 relative group">
-      <div class="absolute inset-0 bg-secondary/0 group-hover:bg-secondary/[0.02] transition-all duration-700"></div>
+      <div class="absolute inset-0 bg-secondary/0 group-hover:bg-secondary/[0.02] transition-all duration-700 pointer-events-none"></div>
       <h2 class="text-tertiary text-clamp-h2 font-light mb-8 italic">¿Listo para elevar tu conocimiento?</h2>
       <p class="text-tertiary/60 font-body text-lg max-w-xl mx-auto mb-12 font-light">
         Únete a nuestra comunidad exclusiva y accede a los mejores recursos educativos digitales.
       </p>
       <Button 
-        href="/login#register" 
+        href="/login" 
         variant="primary" 
-        class="!px-12 !py-5"
+        class="!px-12 !py-5 relative z-10"
       >
         Comenzar Ahora
       </Button>
@@ -37,27 +38,27 @@ const year = new Date().getFullYear();
       <div>
         <h4 class="text-tertiary font-display text-lg mb-6">Plataforma</h4>
         <ul class="space-y-4 text-sm text-tertiary/50 font-body">
-          <li><a href="#" class="hover:text-secondary transition-colors">Biblioteca</a></li>
-          <li><a href="#" class="hover:text-secondary transition-colors">Cursos Online</a></li>
-          <li><a href="#" class="hover:text-secondary transition-colors">Membresías</a></li>
+          <li><a href="#" class="hover:text-secondary transition-colors duration-200 cursor-pointer">Biblioteca</a></li>
+          <li><a href="#" class="hover:text-secondary transition-colors duration-200 cursor-pointer">Cursos Online</a></li>
+          <li><a href="#" class="hover:text-secondary transition-colors duration-200 cursor-pointer">Membresías</a></li>
         </ul>
       </div>
 
       <div>
         <h4 class="text-tertiary font-display text-lg mb-6">Compañía</h4>
         <ul class="space-y-4 text-sm text-tertiary/50 font-body">
-          <li><a href="#" class="hover:text-secondary transition-colors">Sobre Nosotros</a></li>
-          <li><a href="#" class="hover:text-secondary transition-colors">Contacto</a></li>
-          <li><a href="#" class="hover:text-secondary transition-colors">Términos y Condiciones</a></li>
+          <li><a href="#" class="hover:text-secondary transition-colors duration-200 cursor-pointer">Sobre Nosotros</a></li>
+          <li><a href="#" class="hover:text-secondary transition-colors duration-200 cursor-pointer">Contacto</a></li>
+          <li><a href="#" class="hover:text-secondary transition-colors duration-200 cursor-pointer">Términos y Condiciones</a></li>
         </ul>
       </div>
 
       <div>
         <h4 class="text-tertiary font-display text-lg mb-6">Síguenos</h4>
         <div class="flex space-x-6 text-tertiary/50">
-           <a href="#" class="hover:text-secondary transition-colors">Instagram</a>
-           <a href="#" class="hover:text-secondary transition-colors">LinkedIn</a>
-           <a href="#" class="hover:text-secondary transition-colors">Twitter</a>
+           <a href="#" class="hover:text-secondary transition-colors duration-200 cursor-pointer">Instagram</a>
+           <a href="#" class="hover:text-secondary transition-colors duration-200 cursor-pointer">LinkedIn</a>
+           <a href="#" class="hover:text-secondary transition-colors duration-200 cursor-pointer">Twitter</a>
         </div>
       </div>
     </div>

@@ -1,0 +1,167 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import BookCard from '../components/BookCard.astro';
+import BooksFeatured from '../components/BooksFeatured.astro';
+import booksData from '../data/mock-books.json';
+
+const categories = ['Todas', 'Matemática', 'Lenguaje'];
+---
+
+<Layout title="Dashboard Editorial | Élite Educativa">
+  <Navbar />
+  
+  <main class="pt-[72px] min-h-screen bg-[#F7F2E8]">
+    <!-- Sincronización: Cabecera con el mismo componente de la Landing -->
+    <BooksFeatured />
+
+    <!-- Dashboard Section -->
+    <section class="py-16 bg-white/30 backdrop-blur-sm border-t border-secondary/10">
+      <div class="container mx-auto px-6">
+        <!-- Toolbar Minimalista -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8 bg-white/50 p-6 rounded-[16px] border border-secondary/5 shadow-sm">
+          <div class="w-full md:w-auto flex flex-col md:flex-row items-center gap-6">
+            <div class="relative w-full md:w-64 group">
+              <label for="category-filter" class="block text-[10px] uppercase tracking-[0.2em] text-primary/40 font-bold mb-2 ml-1">
+                Filtrar por Especialidad
+              </label>
+              <div class="relative">
+                <select 
+                  id="category-filter"
+                  class="w-full bg-white border border-secondary/10 rounded-[10px] px-5 py-3.5 text-primary font-body text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all hover:border-secondary/30"
+                >
+                  {categories.map(cat => (
+                    <option value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-secondary transition-transform duration-300 group-hover:translate-y-[-40%]">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+              </div>
+            </div>
+            
+            <div class="h-10 w-[1px] bg-secondary/10 hidden md:block"></div>
+            
+            <div class="flex gap-2">
+              {categories.slice(1).map(cat => (
+                <button 
+                  class="category-pill px-4 py-2 rounded-full border border-secondary/10 text-[11px] font-bold uppercase tracking-wider text-primary/60 hover:bg-secondary hover:text-primary transition-all cursor-pointer"
+                  data-category={cat}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div class="flex flex-col items-end">
+            <p class="text-primary/30 font-body text-[11px] uppercase tracking-widest mb-1">Inventario Editorial</p>
+            <p class="text-primary/80 font-display text-xl italic">
+              <span id="count" class="text-secondary font-bold not-italic">{booksData.length}</span> Obras disponibles
+            </p>
+          </div>
+        </div>
+
+        <!-- Grid de Libros -->
+        <div id="books-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+          {booksData.map((book) => (
+            <div class="book-item transition-all duration-500" data-category={book.category}>
+              <BookCard {...book} />
+            </div>
+          ))}
+        </div>
+        
+        <!-- Fallback no resultados -->
+        <div id="no-results" class="hidden py-32 text-center">
+          <div class="max-w-md mx-auto">
+             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#C9A44A" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-6 opacity-20"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+             <h3 class="text-2xl font-display text-primary/60 italic mb-2">No se encontraron coincidencias</h3>
+             <p class="text-primary/40 font-body text-sm">Prueba seleccionando otra categoría o restablece los filtros.</p>
+             <button id="reset-filter" class="mt-8 text-secondary font-bold text-xs uppercase tracking-widest border-b border-secondary pb-1 hover:text-primary transition-colors cursor-pointer">
+               Ver toda la colección
+             </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  const filter = document.getElementById('category-filter') as HTMLSelectElement;
+  const grid = document.getElementById('books-grid');
+  const items = document.querySelectorAll('.book-item');
+  const countDisplay = document.getElementById('count');
+  const noResults = document.getElementById('no-results');
+  const pills = document.querySelectorAll('.category-pill');
+  const resetBtn = document.getElementById('reset-filter');
+
+  function applyFilter(category: string) {
+    let visibleCount = 0;
+
+    items.forEach((item: any) => {
+      const itemCategory = item.dataset.category;
+      if (category === 'Todas' || itemCategory === category) {
+        item.style.display = 'block';
+        item.style.opacity = '0';
+        setTimeout(() => {
+          item.style.opacity = '1';
+        }, 10);
+        visibleCount++;
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    if (countDisplay) countDisplay.textContent = visibleCount.toString();
+    
+    if (visibleCount === 0) {
+      noResults?.classList.remove('hidden');
+      grid?.classList.add('hidden');
+    } else {
+      noResults?.classList.add('hidden');
+      grid?.classList.remove('hidden');
+    }
+
+    // Sync pills
+    pills.forEach((pill: any) => {
+      if (pill.dataset.category === category) {
+        pill.classList.add('bg-secondary', 'text-primary');
+      } else {
+        pill.classList.remove('bg-secondary', 'text-primary');
+      }
+    });
+
+    // Sync select
+    if (filter) filter.value = category;
+  }
+
+  filter?.addEventListener('change', () => applyFilter(filter.value));
+  
+  pills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      const cat = pill.getAttribute('data-category');
+      if (cat) applyFilter(cat);
+    });
+  });
+
+  resetBtn?.addEventListener('click', () => applyFilter('Todas'));
+</script>
+
+<style>
+  select {
+    background-image: none;
+  }
+  
+  .book-item {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>

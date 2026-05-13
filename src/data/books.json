@@ -1,0 +1,42 @@
+[
+  {
+    "id": "matematica-1",
+    "title": "Cálculo Diferencial Avanzado",
+    "author": "Dr. Arturo Ruiz",
+    "price": "$35.00",
+    "category": "Matemática",
+    "description": "Una guía exhaustiva sobre los principios del cálculo diferencial, diseñada para estudiantes de ingeniería y ciencias exactas.",
+    "pages": 120,
+    "image": "https://placehold.co/400x600/0A1628/F7F2E8?text=Matemática"
+  },
+  {
+    "id": "lenguaje-1",
+    "title": "Retórica y Composición",
+    "author": "Elena Martínez",
+    "price": "$28.00",
+    "category": "Lenguaje",
+    "description": "Explora el arte de la persuasión y la estructuración de textos académicos de alto nivel.",
+    "pages": 85,
+    "image": "https://placehold.co/400x600/0A1628/F7F2E8?text=Lenguaje"
+  },
+  {
+    "id": "matematica-2",
+    "title": "Álgebra Lineal Moderna",
+    "author": "Ing. Roberto S.",
+    "price": "$32.50",
+    "category": "Matemática",
+    "description": "Conceptos modernos de álgebra lineal aplicados a la computación y análisis de datos.",
+    "pages": 150,
+    "image": "https://placehold.co/400x600/0A1628/F7F2E8?text=Álgebra"
+  },
+  {
+    "id": "lenguaje-2",
+    "title": "Literatura Universal: Análisis",
+    "author": "Lucía Blanco",
+    "price": "$24.99",
+    "category": "Lenguaje",
+    "description": "Un recorrido por las obras maestras que han moldeado el pensamiento humano a través de los siglos.",
+    "pages": 210,
+    "image": "https://placehold.co/400x600/0A1628/F7F2E8?text=Literatura"
+  }
+]
