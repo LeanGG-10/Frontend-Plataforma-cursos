@@ -1,0 +1,33 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Página no encontrada | Élite Educativa">
+  <Navbar />
+  <main class="pt-[72px] min-h-[70vh] flex items-center justify-center bg-[#F7F2E8]">
+    <div class="text-center space-y-8 px-6">
+      <div class="relative inline-block">
+        <h1 class="text-[12rem] font-display font-black text-primary/5 select-none">404</h1>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <p class="text-4xl font-display font-bold text-primary italic">Obra no encontrada</p>
+        </div>
+      </div>
+      
+      <p class="text-primary/60 font-body max-w-md mx-auto leading-relaxed">
+        Lo sentimos, el ejemplar que buscas no se encuentra en nuestra biblioteca actual o ha sido retirado.
+      </p>
+
+      <div class="pt-4">
+        <a 
+          href="/libros" 
+          class="inline-block bg-primary text-secondary px-10 py-4 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-secondary hover:text-primary transition-all shadow-xl"
+        >
+          Volver a la Biblioteca
+        </a>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>

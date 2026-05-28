@@ -1,5 +1,9 @@
 const API_URL = import.meta.env.PUBLIC_API_URL;
 
+export const USER_STORAGE_KEY = 'elite_user_data';
+export const ACCESS_TOKEN_KEY = 'accessToken';
+export const SESSION_ID_KEY = 'activeSessionId';
+
 export interface AuthResponse {
   accessToken: string;
   activeSessionId: string;
@@ -29,14 +33,12 @@ class AuthService {
   async login(email: string, password: string): Promise<AuthResponse> {
     const url = `${API_URL}/auth/login`;
     
-    // Trim and prepare payload to match backend DTO
     const payload = {
       email: email.trim(),
       password: password.trim()
     };
 
-    console.log(`[AuthService] Attempting login at: ${url}`);
-    console.log('[AuthService] Payload (JSON.stringify):', JSON.stringify(payload));
+    console.log(`[AuthService] Iniciando login en: ${url}`);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -45,90 +47,87 @@ class AuthService {
     });
 
     const data = await this.handleResponse<AuthResponse>(response);
-    console.log('[AuthService] Login response data:', data);
+    console.log("[AuthService] Datos recibidos del server:", data);
+
     this.saveSession(data);
+    
+    // Broadcast del cambio para otros componentes
+    window.dispatchEvent(new Event('auth-updated'));
+    
     return data;
   }
 
   async register(name: string, email: string, password: string): Promise<AuthResponse> {
     const url = `${API_URL}/auth/signup`;
-
-    // Trim and prepare payload to match backend DTO
     const payload = {
       name: name.trim(),
       email: email.trim(),
       password: password.trim()
     };
 
-    console.log(`[AuthService] Attempting register at: ${url}`);
-    console.log('[AuthService] Payload (JSON.stringify):', JSON.stringify(payload));
-
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
-    const data = await this.handleResponse<AuthResponse>(response);
-    // El registro solo devuelve el usuario, no iniciamos sesión automáticamente
-    return data;
+    return this.handleResponse<AuthResponse>(response);
   }
 
-  async resendConfirmation(email: string): Promise<any> {
-    const url = `${API_URL}/auth/resend-confirmation`;
-    console.log(`[AuthService] Attempting resend at: ${url}`);
+  private saveSession(data: any) {
+    // Limpieza de seguridad
+    localStorage.clear();
 
+    // Extraer token y sessionId de la respuesta
+    const token = data.accessToken || data.access_token || data.token;
+    const sessionId = data.activeSessionId || data.active_session_id || data.sessionId;
+    const userData = data.user || data;
+    
+    if (token) localStorage.setItem(ACCESS_TOKEN_KEY, token);
+    if (sessionId) localStorage.setItem(SESSION_ID_KEY, sessionId);
+    
+    // Extracción directa del objeto user según requerimiento
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+    console.log("[AuthService] Usuario guardado en elite_user_data:", userData);
+  }
+
+  logout() {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(SESSION_ID_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
+    window.location.href = '/login';
+  }
+
+  isAuthenticated(): boolean {
+    return !!localStorage.getItem(ACCESS_TOKEN_KEY);
+  }
+
+  getUser() {
+    const data = localStorage.getItem(USER_STORAGE_KEY);
+    if (!data) return null;
+    try {
+      return JSON.parse(data);
+    } catch {
+      return null;
+    }
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem(ACCESS_TOKEN_KEY);
+  }
+
+  async resendConfirmation(email: string): Promise<void> {
+    const url = `${API_URL}/auth/resend-confirmation`;
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email.trim() }),
     });
 
-    return this.handleResponse(response);
-  }
-
-  private saveSession(data: any) {
-    console.log('Raw Response from Server:', data);
-    
-    // Limpieza previa para evitar basura de sesiones anteriores
-    localStorage.clear();
-
-    // Mapeo flexible para detectar nombres de llaves (NestJS suele usar camelCase o snake_case)
-    const token = data.accessToken || data.access_token || data.token;
-    const sessionId = data.activeSessionId || data.active_session_id || data.sessionId;
-    const user = data.user || data.profile || data.data?.user;
-
-    if (token) localStorage.setItem('accessToken', token);
-    if (sessionId) localStorage.setItem('activeSessionId', sessionId);
-    if (user) localStorage.setItem('user', JSON.stringify(user));
-    
-    console.log('Stored Token:', localStorage.getItem('accessToken'));
-    console.log('Stored SessionID:', localStorage.getItem('activeSessionId'));
-
-    if (!token) {
-      console.log('[AuthService] Info: No se encontró un token. Esto es normal en el registro.');
-    } else {
-      console.log('%c[AuthSuccess] Sesión persistida correctamente.', 'color: #C9A44A; font-weight: bold;');
+    if (!response.ok) {
+      const errorData: AuthError = await response.json();
+      throw errorData;
     }
-  }
-
-  logout() {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('activeSessionId');
-    localStorage.removeItem('user');
-    window.location.href = '/login';
-  }
-
-  isAuthenticated(): boolean {
-    return !!localStorage.getItem('accessToken');
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem('accessToken');
-  }
-
-  getSessionId(): string | null {
-    return localStorage.getItem('activeSessionId');
   }
 }
 

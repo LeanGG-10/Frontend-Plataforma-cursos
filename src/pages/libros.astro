@@ -2,11 +2,12 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
-import BookCard from '../components/BookCard.astro';
 import BooksFeatured from '../components/BooksFeatured.astro';
-import booksData from '../data/mock-books.json';
+import AdminToggle from '../components/admin/AdminToggle';
+import BookManagementGrid from '../components/admin/BookManagementGrid';
 
-const categories = ['Todas', 'Matemática', 'Lenguaje'];
+
+const categories = ['Todas'];
 ---
 
 <Layout title="Dashboard Editorial | Élite Educativa">
@@ -43,7 +44,7 @@ const categories = ['Todas', 'Matemática', 'Lenguaje'];
             
             <div class="h-10 w-[1px] bg-secondary/10 hidden md:block"></div>
             
-            <div class="flex gap-2">
+            <div id="category-pills" class="flex gap-2">
               {categories.slice(1).map(cat => (
                 <button 
                   class="category-pill px-4 py-2 rounded-full border border-secondary/10 text-[11px] font-bold uppercase tracking-wider text-primary/60 hover:bg-secondary hover:text-primary transition-all cursor-pointer"
@@ -55,34 +56,24 @@ const categories = ['Todas', 'Matemática', 'Lenguaje'];
             </div>
           </div>
           
-          <div class="flex flex-col items-end">
-            <p class="text-primary/30 font-body text-[11px] uppercase tracking-widest mb-1">Inventario Editorial</p>
-            <p class="text-primary/80 font-display text-xl italic">
-              <span id="count" class="text-secondary font-bold not-italic">{booksData.length}</span> Obras disponibles
-            </p>
+          <div class="flex flex-col items-end gap-4">
+            <div class="flex flex-col items-end">
+              <p class="text-primary/30 font-body text-[11px] uppercase tracking-widest mb-1">Inventario Editorial</p>
+              <p class="text-primary/80 font-display text-xl italic">
+                <span id="count" class="text-secondary font-bold not-italic">0</span> Obras disponibles
+              </p>
+            </div>
+            
+            <AdminToggle client:only="react" />
           </div>
         </div>
 
-        <!-- Grid de Libros -->
-        <div id="books-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-          {booksData.map((book) => (
-            <div class="book-item transition-all duration-500" data-category={book.category}>
-              <BookCard {...book} />
-            </div>
-          ))}
+        <!-- Grid de Libros Interactiva -->
+        <div id="books-grid-container">
+          <BookManagementGrid client:load initialBooks={[]} />
         </div>
         
-        <!-- Fallback no resultados -->
-        <div id="no-results" class="hidden py-32 text-center">
-          <div class="max-w-md mx-auto">
-             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#C9A44A" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-6 opacity-20"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-             <h3 class="text-2xl font-display text-primary/60 italic mb-2">No se encontraron coincidencias</h3>
-             <p class="text-primary/40 font-body text-sm">Prueba seleccionando otra categoría o restablece los filtros.</p>
-             <button id="reset-filter" class="mt-8 text-secondary font-bold text-xs uppercase tracking-widest border-b border-secondary pb-1 hover:text-primary transition-colors cursor-pointer">
-               Ver toda la colección
-             </button>
-          </div>
-        </div>
+
       </div>
     </section>
   </main>
@@ -91,64 +82,8 @@ const categories = ['Todas', 'Matemática', 'Lenguaje'];
 </Layout>
 
 <script>
-  const filter = document.getElementById('category-filter') as HTMLSelectElement;
-  const grid = document.getElementById('books-grid');
-  const items = document.querySelectorAll('.book-item');
-  const countDisplay = document.getElementById('count');
-  const noResults = document.getElementById('no-results');
-  const pills = document.querySelectorAll('.category-pill');
-  const resetBtn = document.getElementById('reset-filter');
-
-  function applyFilter(category: string) {
-    let visibleCount = 0;
-
-    items.forEach((item: any) => {
-      const itemCategory = item.dataset.category;
-      if (category === 'Todas' || itemCategory === category) {
-        item.style.display = 'block';
-        item.style.opacity = '0';
-        setTimeout(() => {
-          item.style.opacity = '1';
-        }, 10);
-        visibleCount++;
-      } else {
-        item.style.display = 'none';
-      }
-    });
-
-    if (countDisplay) countDisplay.textContent = visibleCount.toString();
-    
-    if (visibleCount === 0) {
-      noResults?.classList.remove('hidden');
-      grid?.classList.add('hidden');
-    } else {
-      noResults?.classList.add('hidden');
-      grid?.classList.remove('hidden');
-    }
-
-    // Sync pills
-    pills.forEach((pill: any) => {
-      if (pill.dataset.category === category) {
-        pill.classList.add('bg-secondary', 'text-primary');
-      } else {
-        pill.classList.remove('bg-secondary', 'text-primary');
-      }
-    });
-
-    // Sync select
-    if (filter) filter.value = category;
-  }
-
-  filter?.addEventListener('change', () => applyFilter(filter.value));
-  
-  pills.forEach(pill => {
-    pill.addEventListener('click', () => {
-      const cat = pill.getAttribute('data-category');
-      if (cat) applyFilter(cat);
-    });
-  });
-
-  resetBtn?.addEventListener('click', () => applyFilter('Todas'));
+  // Simple listener to update count if needed from the outside, 
+  // but BookManagementGrid handles its own internal filtering now.
 </script>
 
 <style>
