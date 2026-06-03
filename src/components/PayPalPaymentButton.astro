@@ -1,0 +1,453 @@
+---
+// src/components/PayPalPaymentButton.astro
+
+interface Props {
+  bookId: string;
+  bookPrice: string | number;
+  apiUrl: string;
+}
+
+const { bookId, bookPrice, apiUrl } = Astro.props;
+const paypalClientId = import.meta.env.PUBLIC_PAYPAL_CLIENT_ID;
+---
+
+<div 
+  class="w-full flex flex-col gap-4 elite-paypal-wrapper" 
+  data-book-id={bookId} 
+  data-book-price={bookPrice} 
+  data-api-url={apiUrl}
+  data-paypal-client-id={paypalClientId}
+>
+  <!-- Loader Spinner (Initial verification state) -->
+  <div id="paypal-loading" class="w-full py-5 flex items-center justify-center gap-3 text-primary/60 font-body text-sm font-semibold">
+    <svg class="animate-spin h-5 w-5 text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <span>Verificando acceso...</span>
+  </div>
+
+  <!-- Login Prompt Button (Shown if not logged in) -->
+  <div id="paypal-login-prompt" class="hidden w-full text-center p-6 border border-secondary/20 rounded-[12px] bg-white/20 backdrop-blur-sm">
+    <p class="text-sm font-body text-primary/70 mb-4 font-semibold">Debes iniciar sesión para adquirir este libro.</p>
+    <a 
+      href="/login" 
+      class="inline-block w-full bg-primary text-white py-4 px-6 rounded-[12px] font-body font-bold text-xs tracking-wider uppercase hover:bg-secondary hover:text-primary transition-all duration-300 text-center shadow-lg hover:shadow-secondary/10"
+    >
+      Iniciar Sesión
+    </a>
+  </div>
+
+  <!-- Read Book Button (Shown if purchased or admin) -->
+  <button 
+    id="paypal-read-btn" 
+    class="hidden w-full bg-primary text-white py-5 px-8 rounded-[12px] font-body font-bold tracking-[0.2em] uppercase hover:bg-secondary hover:text-primary transition-all duration-500 shadow-xl hover:shadow-secondary/20 flex items-center justify-center gap-4 cursor-pointer"
+  >
+    <span>Leer Obra</span>
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:translate-x-2">
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  </button>
+
+  <!-- PayPal Buttons Container (Shown if not purchased) -->
+  <div id="paypal-buttons-container" class="hidden w-full flex flex-col gap-2">
+    <div id="paypal-button-mount" class="w-full min-h-[50px]"></div>
+  </div>
+
+  <!-- Dynamic Feedback Banner (Success / Info messages) -->
+  <div id="paypal-feedback-banner" class="hidden p-4 rounded-[12px] bg-green-50 border border-green-200 text-green-800 text-xs font-body items-start gap-3 shadow-sm transition-all duration-300">
+    <svg class="w-5 h-5 shrink-0 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <div class="flex-grow">
+      <p class="font-bold mb-0.5">¡Compra Exitosa!</p>
+      <p id="paypal-feedback-message">El pago se ha procesado con éxito. Ya puedes leer la obra.</p>
+    </div>
+  </div>
+
+  <!-- Premium Error Alert Banner -->
+  <div id="paypal-error-banner" class="hidden p-4 rounded-[12px] bg-red-50 border border-red-200 text-red-800 text-xs font-body items-start gap-3 shadow-sm transition-all duration-300 relative">
+    <svg class="w-5 h-5 shrink-0 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+    <div class="flex-grow pr-6">
+      <p class="font-bold mb-0.5" id="paypal-error-title">No se pudo procesar la solicitud</p>
+      <p id="paypal-error-message"></p>
+    </div>
+    <button id="paypal-error-close" class="absolute top-3 right-3 text-red-400 hover:text-red-700 font-bold text-base cursor-pointer focus:outline-none" aria-label="Cerrar">&times;</button>
+  </div>
+</div>
+
+<script>
+  // TypeScript interfaces for Backend Contracts
+  interface CreateOrderResponse {
+    orderID: string;
+  }
+
+  interface CaptureOrderResponse {
+    success: boolean;
+  }
+
+  interface ReadUrlResponse {
+    url: string;
+  }
+
+  // Extend window interface for PayPal SDK
+  interface Window {
+    paypal?: any;
+  }
+
+  // Self-executing initialization closure to avoid global namespace leakage
+  document.querySelectorAll('.elite-paypal-wrapper').forEach((wrapperElement) => {
+    const wrapper = wrapperElement as HTMLDivElement;
+    const bookId = wrapper.getAttribute('data-book-id') || '';
+    const apiUrl = wrapper.getAttribute('data-api-url') || '';
+    const paypalClientId = wrapper.getAttribute('data-paypal-client-id') || '';
+
+    // Component DOM references
+    const loader = wrapper.querySelector('#paypal-loading') as HTMLDivElement;
+    const loginPrompt = wrapper.querySelector('#paypal-login-prompt') as HTMLDivElement;
+    const readBtn = wrapper.querySelector('#paypal-read-btn') as HTMLButtonElement;
+    const paypalContainer = wrapper.querySelector('#paypal-buttons-container') as HTMLDivElement;
+    const errorBanner = wrapper.querySelector('#paypal-error-banner') as HTMLDivElement;
+    const errorMessage = wrapper.querySelector('#paypal-error-message') as HTMLParagraphElement;
+    const errorTitle = wrapper.querySelector('#paypal-error-title') as HTMLParagraphElement;
+    const errorClose = wrapper.querySelector('#paypal-error-close') as HTMLButtonElement;
+    const feedbackBanner = wrapper.querySelector('#paypal-feedback-banner') as HTMLDivElement;
+
+    // Retrieve storage keys directly from AuthService conventions
+    // Helper to get fresh credentials from localStorage
+    function getAuthSession() {
+      const token = localStorage.getItem('accessToken');
+      const sessionId = localStorage.getItem('activeSessionId');
+      return { token, sessionId };
+    }
+
+    const userDataStr = localStorage.getItem('elite_user_data');
+
+    // Initialize UI flow
+    init();
+
+    async function init() {
+      // Bind error close button
+      errorClose?.addEventListener('click', hideError);
+
+      const { token } = getAuthSession();
+      if (!token) {
+        // User not logged in, show login prompt
+        hideElement(loader);
+        showElement(loginPrompt);
+        return;
+      }
+
+      // Check if user is ADMIN directly from local state first
+      if (userDataStr) {
+        try {
+          const user = JSON.parse(userDataStr);
+          if (user?.role === 'ADMIN') {
+            setupReadMode();
+            return;
+          }
+        } catch (e) {
+          console.warn('[PayPalButton] Error parsing user details:', e);
+        }
+      }
+
+      // Check server access permissions (ADMIN or past purchases)
+      const hasAccess = await checkAccess();
+      if (hasAccess) {
+        setupReadMode();
+      } else {
+        await initPayPalSDK();
+      }
+    }
+
+    // Helper functions for DOM manipulations
+    function showElement(el: HTMLElement) {
+      if (el) {
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+      }
+    }
+
+    function hideElement(el: HTMLElement) {
+      if (el) {
+        el.classList.remove('flex');
+        el.classList.add('hidden');
+      }
+    }
+
+    function showError(title: string, message: string) {
+      if (errorBanner && errorMessage && errorTitle) {
+        errorTitle.textContent = title;
+        errorMessage.textContent = message;
+        showElement(errorBanner);
+      }
+    }
+
+    function hideError() {
+      if (errorBanner) {
+        hideElement(errorBanner);
+      }
+    }
+
+    // Server permission query
+    async function checkAccess(): Promise<boolean> {
+      const { token, sessionId } = getAuthSession();
+      if (!token) return false;
+      try {
+        const response = await fetch(`${apiUrl}/products/${bookId}/read-url`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-session-id': sessionId || '',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.status === 200 || response.status === 201) {
+          return true;
+        }
+
+        if (response.status === 401) {
+          console.warn('[PayPalButton] CheckAccess returned 401. Token might be expired.');
+        }
+
+        return false;
+      } catch (err) {
+        console.error('[PayPalButton] Access check network failure:', err);
+        return false;
+      }
+    }
+
+    // Setup direct read button on click gesture to prevent pop-up blocking
+    function setupReadMode() {
+      hideElement(loader);
+      hideElement(paypalContainer);
+      hideElement(loginPrompt);
+      showElement(readBtn);
+
+      // Event listener on read button
+      readBtn.onclick = async () => {
+        try {
+          hideError();
+          readBtn.disabled = true;
+          const textSpan = readBtn.querySelector('span');
+          const originalText = textSpan ? textSpan.textContent : 'Leer Obra';
+          if (textSpan) textSpan.textContent = 'Obteniendo acceso...';
+
+          const { token, sessionId } = getAuthSession();
+          if (!token) {
+            showError('Sesión Requerida', 'Tu sesión ha expirado o no has iniciado sesión.');
+            if (textSpan) textSpan.textContent = originalText;
+            readBtn.disabled = false;
+            return;
+          }
+
+          const response = await fetch(`${apiUrl}/products/${bookId}/read-url`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'x-session-id': sessionId || '',
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.status === 200 || response.status === 201) {
+            const data: ReadUrlResponse = await response.json();
+            if (data.url) {
+              window.open(data.url, '_blank', 'noopener,noreferrer');
+            } else {
+              showError('Error de dirección', 'No se obtuvo un enlace válido para visualizar el libro.');
+            }
+          } else if (response.status === 401) {
+            showError('Sesión Expirada', 'Tu sesión ha expirado. Por favor, recarga la página e inicia sesión nuevamente.');
+          } else {
+            const errDetail = await response.text();
+            console.error('[PayPalButton] Read URL error response:', errDetail);
+            showError('Acceso denegado', 'No cuentas con los permisos o la compra activa para leer este libro.');
+          }
+
+          if (textSpan) textSpan.textContent = originalText;
+          readBtn.disabled = false;
+        } catch (err) {
+          console.error('[PayPalButton] Failed to fetch read URL:', err);
+          showError('Error de conexión', 'No se pudo contactar al servidor. Revisa tu conexión de red.');
+          readBtn.disabled = false;
+        }
+      };
+    }
+
+    // PayPal SDK loader & renderer
+    async function initPayPalSDK() {
+      if (!paypalClientId) {
+        hideElement(loader);
+        showError('Error de Configuración', 'El identificador público de PayPal (Client ID) no está definido. Comuníquese con soporte.');
+        return;
+      }
+
+      try {
+        await loadScript(`https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(paypalClientId)}&currency=USD&intent=capture`);
+        
+        const win = window as Window;
+        if (!win.paypal) {
+          throw new Error('PayPal SDK no disponible en el objeto window.');
+        }
+
+        // Render buttons
+        win.paypal.Buttons({
+          style: {
+            layout: 'vertical',
+            color: 'gold',
+            shape: 'rect',
+            label: 'pay'
+          },
+          createOrder: async () => {
+            hideError();
+            const { token, sessionId } = getAuthSession();
+            if (!token) {
+              showError('Sesión Expirada', 'No se encontró una sesión activa. Por favor, inicia sesión de nuevo.');
+              throw new Error('UNAUTHORIZED');
+            }
+            try {
+              const res = await fetch(`${apiUrl}/payments/paypal/create-order`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'x-session-id': sessionId || '',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ productId: bookId })
+              });
+
+              if (res.status === 401) {
+                showError('Sesión Expirada', 'Tu sesión ha expirado. Por favor, recarga la página e inicia sesión nuevamente.');
+                throw new Error('UNAUTHORIZED');
+              }
+
+              if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(errText || 'Error al iniciar la orden de pago');
+              }
+
+              const data: CreateOrderResponse = await res.json();
+              if (!data.orderID) {
+                throw new Error('El servidor no retornó un orderID válido');
+              }
+              return data.orderID;
+
+            } catch (err: any) {
+              if (err.message !== 'UNAUTHORIZED') {
+                console.error('[PayPalButton] createOrder failed:', err);
+                showError('Error de Pago', 'No pudimos registrar tu orden. Inténtalo de nuevo.');
+              }
+              throw err;
+            }
+          },
+          onApprove: async (data: { orderID: string }) => {
+            hideError();
+            // Show loader while capturing
+            showElement(loader);
+            hideElement(paypalContainer);
+
+            const { token, sessionId } = getAuthSession();
+            if (!token) {
+              showError('Sesión Expirada', 'Tu sesión expiró mientras realizabas el pago. Por favor, recarga la página e inicia sesión nuevamente.');
+              hideElement(loader);
+              showElement(paypalContainer);
+              return;
+            }
+
+            try {
+              const res = await fetch(`${apiUrl}/payments/paypal/capture-order`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'x-session-id': sessionId || '',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ paypalOrderId: data.orderID })
+              });
+
+              if (res.status === 401) {
+                showError('Sesión Expirada', 'Tu sesión expiró mientras realizabas el pago. Por favor, recarga la página e inicia sesión nuevamente.');
+                hideElement(loader);
+                showElement(paypalContainer);
+                return;
+              }
+
+              if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(errText || 'Error al capturar la orden de pago');
+              }
+
+              const captureData: CaptureOrderResponse = await res.json();
+              if (captureData.success) {
+                // Show success feedback
+                showElement(feedbackBanner);
+                // Transitions to read mode
+                setupReadMode();
+              } else {
+                throw new Error('La captura de pago no fue confirmada por el servidor.');
+              }
+            } catch (err: any) {
+              console.error('[PayPalButton] captureOrder failed:', err);
+              showError('Falla de Captura', 'El dinero no pudo ser capturado o verificado. Contacta a soporte.');
+              hideElement(loader);
+              showElement(paypalContainer);
+            }
+          },
+          onCancel: () => {
+            showError('Pago Cancelado', 'Has cancelado la transacción de pago de PayPal.');
+          },
+          onError: (err: any) => {
+            console.error('[PayPalButton] PayPal SDK error handler callback:', err);
+            // Distinguish instrument decline/insufficient funds errors if possible from context
+            const errStr = String(err).toLowerCase();
+            if (errStr.includes('decline') || errStr.includes('insufficient')) {
+              showError('Fondos Insuficientes', 'La transacción fue rechazada por fondos insuficientes o rechazo de tarjeta.');
+            } else {
+              showError('Falla de Transacción', 'Ocurrió un error inesperado con PayPal. Inténtalo de nuevo o usa otro método de pago.');
+            }
+          }
+        }).render(wrapper.querySelector('#paypal-button-mount'));
+
+        hideElement(loader);
+        showElement(paypalContainer);
+
+      } catch (err) {
+        console.error('[PayPalButton] Failed to initialize PayPal SDK script:', err);
+        hideElement(loader);
+        showError('Falla de Carga', 'No se pudo cargar la pasarela de PayPal de forma segura. Revisa tu conexión de red o extensiones bloqueadoras de anuncios.');
+      }
+    }
+
+    // Dynamic Script Injection Helper with caching/deduplication
+    function loadScript(src: string): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector(`script[src="${src}"]`);
+        if (existing) {
+          if ((window as any).paypal) {
+            resolve();
+            return;
+          }
+          existing.addEventListener('load', () => resolve());
+          existing.addEventListener('error', (e) => reject(e));
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = (e) => reject(e);
+        document.head.appendChild(script);
+      });
+    }
+  });
+</script>
+
+<style>
+  .font-body {
+    font-family: 'Raleway', sans-serif;
+  }
+</style>
