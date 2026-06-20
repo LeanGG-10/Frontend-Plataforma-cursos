@@ -129,6 +129,39 @@ class AuthService {
       throw errorData;
     }
   }
+
+  async recoverPassword(email: string): Promise<void> {
+    const url = `${API_URL}/auth/recover-password`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim() }),
+    });
+
+    if (!response.ok) {
+      const errorData: AuthError = await response.json();
+      throw errorData;
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const url = `${API_URL}/auth/reset-password`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword }),
+    });
+
+    if (!response.ok) {
+      const errorData: AuthError = await response.json();
+      throw errorData;
+    }
+
+    // Limpiar sesión actual por seguridad
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(SESSION_ID_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
+  }
 }
 
 export const authService = new AuthService();

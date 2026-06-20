@@ -28,11 +28,11 @@ const paypalClientId = import.meta.env.PUBLIC_PAYPAL_CLIENT_ID;
   </div>
 
   <!-- Login Prompt Button (Shown if not logged in) -->
-  <div id="paypal-login-prompt" class="hidden w-full text-center p-6 border border-secondary/20 rounded-[12px] bg-white/20 backdrop-blur-sm">
-    <p class="text-sm font-body text-primary/70 mb-4 font-semibold">Debes iniciar sesión para adquirir este libro.</p>
+  <div id="paypal-login-prompt" class="hidden w-full text-center p-6 border border-secondary/20 rounded-[16px] bg-white/20 backdrop-blur-sm shadow-sm">
+    <p class="text-sm font-body text-primary/70 mb-6 font-semibold leading-relaxed">Debes iniciar sesión para adquirir este libro.</p>
     <a 
       href="/login" 
-      class="inline-block w-full bg-primary text-white py-4 px-6 rounded-[12px] font-body font-bold text-xs tracking-wider uppercase hover:bg-secondary hover:text-primary transition-all duration-300 text-center shadow-lg hover:shadow-secondary/10"
+      class="flex items-center justify-center w-full bg-primary text-white py-4 px-6 rounded-full font-body font-bold text-xs tracking-wider uppercase hover:bg-secondary hover:text-primary transition-all duration-300 shadow-lg hover:shadow-secondary/20 hover:-translate-y-0.5 active:translate-y-0"
     >
       Iniciar Sesión
     </a>

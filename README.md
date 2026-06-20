@@ -11,7 +11,7 @@ El frontend actúa como la interfaz de usuario de alto rendimiento para el catá
 
 ### Módulos y Componentes Críticos de la UI
 
-*   **Authentication Flows (`src/pages/login.astro` & `src/services/auth.service.ts`)**: Gestiona la autenticación del usuario mediante formularios dedicados y persiste el ciclo de vida de la sesión a través de los tokens `accessToken` y `activeSessionId` (guardados localmente bajo `accessToken` y `activeSessionId` en `localStorage`), además de la metadata en `elite_user_data`.
+*   **Authentication Flows (`src/pages/login.astro`, `src/pages/forgot-password.astro`, `src/pages/reset-password.astro` & `src/services/auth.service.ts`)**: Gestiona la autenticación del usuario mediante formularios dedicados, incluyendo inicio de sesión, registro y un flujo seguro de recuperación de contraseñas. Persiste el ciclo de vida de la sesión a través de los tokens `accessToken` y `activeSessionId` (guardados localmente bajo `accessToken` y `activeSessionId` en `localStorage`), además de la metadata en `elite_user_data`.
 *   **PayPal Intelligent Button (`src/components/PayPalPaymentButton.astro` & `src/components/paypal-button.ts`)**: Componente dinámico y desacoplado que actúa como cargador asíncrono del SDK global de PayPal. Renderiza los botones interactivos e implementa los hooks transaccionales del cliente en caliente.
 *   **Renderizado Condicional de Obra (`src/pages/libros/[id].astro`)**: Controlador que interactúa con la API del backend mediante peticiones HTTP para consultar los permisos de lectura del usuario (`/products/[id]/read-url`). Decide en tiempo real si expone el módulo de pago de PayPal o renderiza directamente el disparador de lectura ("LEER OBRA") que abre el visor PDF.
 
@@ -26,6 +26,9 @@ src/
 ├── assets/                     # Recursos gráficos estáticos procesados por Vite
 ├── components/                 # Componentes visuales reutilizables
 │   ├── admin/                  # Componentes específicos del panel de administración
+│   ├── auth/                   # Componentes de autenticación interactivos (React Islands)
+│   │   ├── ForgotPasswordForm.tsx  # Formulario de solicitud de recuperación
+│   │   └── ResetPasswordForm.tsx   # Formulario de nueva contraseña (procesa hash URL)
 │   ├── ui/                     # Primitivas de diseño atómicas y estructurales
 │   ├── BookCard.astro          # Card de presentación de obra en catálogo Astro
 │   ├── BookCardReact.tsx       # Componente de catálogo interactivo en React
@@ -44,9 +47,11 @@ src/
 │   ├── libros/
 │   │   └── [id].astro          # Ruta dinámica SSR para la ficha de detalle de cada libro
 │   ├── 404.astro               # Página de error 404 optimizada
+│   ├── forgot-password.astro   # Vista para solicitar recuperación de contraseña
 │   ├── index.astro             # Landing page principal
 │   ├── libros.astro            # Catálogo general de libros de la biblioteca
-│   └── login.astro             # Flujos unificados de Login, Registro y Confirmación
+│   ├── login.astro             # Flujos unificados de Login, Registro y Confirmación
+│   └── reset-password.astro    # Vista para actualizar la contraseña (lee token Supabase)
 ├── services/                   # Clientes de API y persistencia de datos (Singletons)
 │   ├── auth.service.ts         # Orquestador de llamadas de sesión y almacenamiento de tokens
 │   ├── book.service.ts         # Consumo del catálogo de productos y metadatos
