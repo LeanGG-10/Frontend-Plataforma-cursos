@@ -1,0 +1,138 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import { formatPrice } from '../../utils/format';
+import PayPalPaymentButton from '../../components/PayPalPaymentButton.astro';
+
+const { id } = Astro.params;
+const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+
+let book = null;
+
+try {
+  const response = await fetch(`${API_URL}/products/${id}`);
+  
+  if (!response.ok) {
+    return Astro.redirect('/404');
+  }
+
+  const data = await response.json();
+  
+  // Mapping logic
+  book = {
+    ...data,
+    image: data.coverUrl,
+    author: data.bookMetadata?.author || 'Élite Educativa',
+    pages: data.bookMetadata?.pages || 0,
+    categoryName: data.category?.name || 'Sin Categoría',
+  };
+
+} catch (error) {
+  console.error('[SSR Error] Failed to fetch book:', error);
+  return Astro.redirect('/404');
+}
+
+if (!book) return Astro.redirect('/404');
+---
+
+<Layout title={`${book.title} | Élite Educativa`}>
+  <Navbar />
+  
+  <main class="pt-[72px] min-h-screen bg-[#F7F2E8]">
+    <div class="container mx-auto px-6 py-12 md:py-24">
+      <!-- Breadcrumbs -->
+      <nav class="flex mb-12 text-[10px] uppercase tracking-[0.3em] text-primary/40 font-bold">
+        <a href="/" class="hover:text-secondary transition-colors cursor-pointer">Inicio</a>
+        <span class="mx-4">/</span>
+        <a href="/libros" class="hover:text-secondary transition-colors cursor-pointer">Biblioteca</a>
+        <span class="mx-4 text-secondary">/</span>
+        <span class="text-primary/60">{book.title}</span>
+      </nav>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
+        
+        <!-- Book Cover (Left) -->
+        <div class="lg:col-span-5">
+          <div class="aspect-[3/4] rounded-[20px] overflow-hidden shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] border border-secondary/10 bg-white group relative">
+            <img 
+              src={book.image} 
+              alt={book.title} 
+              class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none"></div>
+          </div>
+        </div>
+
+        <!-- Book Info & Action (Right) -->
+        <div class="lg:col-span-7 space-y-10">
+          <header class="space-y-6">
+            <span class="inline-block bg-secondary text-primary px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">
+              {book.categoryName}
+            </span>
+            <h1 class="text-5xl md:text-6xl xl:text-7xl font-display text-primary font-bold leading-[1.1]">
+              {book.title}
+            </h1>
+            <p class="text-primary/60 font-body text-xl font-light leading-relaxed max-w-2xl border-l-2 border-secondary/30 pl-8 py-2">
+              {book.description}
+            </p>
+          </header>
+
+          <!-- Technical Details Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-8 py-8 border-y border-secondary/10">
+             <div>
+               <p class="text-[10px] uppercase tracking-widest text-primary/30 font-bold mb-1">Autoría</p>
+               <p class="font-display text-xl italic text-primary/80">{book.author}</p>
+             </div>
+             <div>
+               <p class="text-[10px] uppercase tracking-widest text-primary/30 font-bold mb-1">Extensión</p>
+               <p class="font-display text-xl italic text-primary/80">{book.pages || 0} Páginas</p>
+             </div>
+             <div>
+               <p class="text-[10px] uppercase tracking-widest text-primary/30 font-bold mb-1">ISBN</p>
+               <p class="font-display text-xl italic text-primary/80">{book.bookMetadata?.isbn || 'N/A'}</p>
+             </div>
+             <div>
+               <p class="text-[10px] uppercase tracking-widest text-primary/30 font-bold mb-1">Formato</p>
+               <p class="font-display text-xl italic text-primary/80">{book.bookMetadata?.format || 'Digital'}</p>
+             </div>
+             <div>
+               <p class="text-[10px] uppercase tracking-widest text-primary/30 font-bold mb-1">Idioma</p>
+               <p class="font-display text-xl italic text-primary/80">Español</p>
+             </div>
+          </div>
+
+          <!-- Price & Action Section -->
+          <div class="bg-white/40 backdrop-blur-md p-8 rounded-[16px] border border-white/60 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div>
+               <p class="text-[10px] uppercase tracking-[0.4em] text-secondary font-black mb-2">Precio de Colección</p>
+               <div class="flex items-baseline gap-4">
+                 <span class="text-5xl font-display font-bold text-primary">
+                   {formatPrice(book.price)}
+                 </span>
+                 <span class="text-xs text-primary/40 font-body">Format: PDF</span>
+               </div>
+            </div>
+
+            <div class="w-full md:w-auto min-w-[280px]">
+              <PayPalPaymentButton bookId={book.id} bookPrice={book.price} apiUrl={API_URL} />
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  h1, h2, h3, .font-display {
+    font-family: 'Cormorant Garamond', serif;
+  }
+  
+  .font-body {
+    font-family: 'Raleway', sans-serif;
+  }
+</style>

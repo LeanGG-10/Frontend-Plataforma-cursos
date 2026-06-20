@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --primary: #0A1628;
+    --secondary: #C9A44A;
+    --tertiary: #F7F2E8;
+    --navy-dark: #060F1C;
+    --navy-light: #1E3050;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-[#F7F2E8] text-[#0A1628] font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@theme {
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-tertiary: var(--tertiary);
+  --color-navy-dark: var(--navy-dark);
+  --color-navy-light: var(--navy-light);
+
+  --font-display: "Cormorant Garamond", serif;
+  --font-body: "Raleway", sans-serif;
+}
+
+/* Luxury Grid Pattern */
+.grid-pattern {
+  background-image: radial-gradient(circle, rgba(201, 164, 74, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.dark-grid-pattern {
+  background-image: linear-gradient(to right, rgba(201, 164, 74, 0.04) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(201, 164, 74, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Typography Clamps */
+.text-clamp-h1 {
+  font-size: clamp(3rem, 8vw, 5.5rem); /* ~88px */
+}
+
+.text-clamp-h2 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+}
