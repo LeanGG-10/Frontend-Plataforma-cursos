@@ -26,10 +26,10 @@ class BookService {
     return {
       id: data.id,
       title: data.title,
-      author: data.bookMetadata?.author || 'Élite Educativa',
+      author: data.book?.author || 'Élite Educativa',
       price: data.price,
-      category: data.category || 'Sin Categoría',
-      image: data.coverUrl,
+      category: data.categoryName || 'Sin Categoría',
+      image: data.coverImage || data.coverUrl,
       summary: data.description,
       isFeatured: data.isFeatured,
     };
@@ -59,6 +59,15 @@ class BookService {
   async getAllBooks(): Promise<Book[]> {
     const response = await fetch(`${API_URL}/products`);
     const data = await this.handleResponse<any[]>(response, 'Error al obtener los libros');
+    return data.map((b: any) => this.mapBook(b));
+  }
+
+  async getMyBooks(): Promise<Book[]> {
+    const response = await fetch(`${API_URL}/products/mine`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    const data = await this.handleResponse<any[]>(response, 'Error al obtener tus libros');
     return data.map((b: any) => this.mapBook(b));
   }
 

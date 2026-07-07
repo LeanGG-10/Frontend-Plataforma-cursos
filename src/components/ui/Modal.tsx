@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -9,16 +10,22 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div 
         className="absolute inset-0 bg-primary/60 backdrop-blur-md animate-in fade-in duration-300 cursor-pointer" 
         onClick={onClose}
       />
-      <div className="relative bg-white w-full max-w-lg rounded-[24px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-secondary/10">
-        <div className="flex justify-between items-center p-6 border-b border-secondary/5 bg-tertiary/30">
+      <div className="relative bg-white w-full max-w-lg max-h-[90vh] flex flex-col rounded-[24px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-secondary/10">
+        <div className="flex justify-between items-center p-6 border-b border-secondary/5 bg-tertiary/30 shrink-0">
           <h3 className="text-xl font-display font-bold text-primary">{title}</h3>
           <button 
             onClick={onClose}
@@ -28,11 +35,12 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
             <X size={20} />
           </button>
         </div>
-        <div className="p-8">
+        <div className="p-8 overflow-y-auto custom-scrollbar">
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

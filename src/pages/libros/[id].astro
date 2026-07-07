@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import Navbar from '../../components/Navbar.astro';
+import Navbar from '../../components/ui/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import { formatPrice } from '../../utils/format';
 import PayPalPaymentButton from '../../components/PayPalPaymentButton.astro';
@@ -22,10 +22,10 @@ try {
   // Mapping logic
   book = {
     ...data,
-    image: data.coverUrl,
-    author: data.bookMetadata?.author || 'Élite Educativa',
-    pages: data.bookMetadata?.pages || 0,
-    categoryName: data.category?.name || 'Sin Categoría',
+    image: data.coverImage || data.coverUrl,
+    author: data.book?.author || 'Élite Educativa',
+    pages: data.book?.pages || 0,
+    categoryName: data.categoryName || 'Sin Categoría',
   };
 
 } catch (error) {
@@ -90,11 +90,11 @@ if (!book) return Astro.redirect('/404');
              </div>
              <div>
                <p class="text-[10px] uppercase tracking-widest text-primary/30 font-bold mb-1">ISBN</p>
-               <p class="font-display text-xl italic text-primary/80">{book.bookMetadata?.isbn || 'N/A'}</p>
+               <p class="font-display text-xl italic text-primary/80">{book.book?.isbn || 'N/A'}</p>
              </div>
              <div>
                <p class="text-[10px] uppercase tracking-widest text-primary/30 font-bold mb-1">Formato</p>
-               <p class="font-display text-xl italic text-primary/80">{book.bookMetadata?.format || 'Digital'}</p>
+               <p class="font-display text-xl italic text-primary/80">{book.book?.format || 'Digital'}</p>
              </div>
              <div>
                <p class="text-[10px] uppercase tracking-widest text-primary/30 font-bold mb-1">Idioma</p>

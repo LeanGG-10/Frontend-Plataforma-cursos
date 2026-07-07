@@ -99,10 +99,12 @@ class AuthService {
   }
 
   isAuthenticated(): boolean {
+    if (typeof window === 'undefined') return false;
     return !!localStorage.getItem(ACCESS_TOKEN_KEY);
   }
 
   getUser() {
+    if (typeof window === 'undefined') return null;
     const data = localStorage.getItem(USER_STORAGE_KEY);
     if (!data) return null;
     try {
@@ -113,6 +115,7 @@ class AuthService {
   }
 
   getToken(): string | null {
+    if (typeof window === 'undefined') return null;
     return localStorage.getItem(ACCESS_TOKEN_KEY);
   }
 

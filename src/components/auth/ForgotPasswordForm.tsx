@@ -3,7 +3,7 @@ import { authService, type AuthError } from '../../services/auth.service';
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'rate-limit'>('idle');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'rate-limit' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
   const validateEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
@@ -22,11 +22,11 @@ export default function ForgotPasswordForm() {
       setStatus('success');
     } catch (err: any) {
       const errorData = err as AuthError;
-      if (errorData.statusCode === 429) {
+      if (errorData?.statusCode === 429) {
         setStatus('rate-limit');
       } else {
-        // En cualquier otra respuesta o error (incluso si no existe el email), mostrar éxito genérico
-        setStatus('success');
+        setErrorMsg('Ocurrió un error. Intenta más tarde.');
+        setStatus('error');
       }
     }
   };
@@ -38,23 +38,30 @@ export default function ForgotPasswordForm() {
         <p className="text-primary/50 text-sm font-body">Ingresa tu correo y te enviaremos instrucciones.</p>
       </div>
 
-      {(status === 'success' || status === 'rate-limit') && (
+      {(status === 'success' || status === 'rate-limit' || status === 'error') && (
         <div className={`mb-8 p-4 rounded-lg flex items-start gap-3 animate-fade-in ${status === 'success' ? 'bg-secondary/10 border border-secondary/20' : 'bg-red-500/10 border border-red-500/20'}`}>
           {status === 'success' ? (
             <>
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A44A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-shrink-0"><path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5C2 7 4 5 6.5 5H18c2.2 0 4 1.8 4 4v8Z"/><path d="m22 10-8.53 4.42a2 2 0 0 1-1.94 0L3 10"/></svg>
               <p className="text-xs text-primary/70 leading-relaxed font-body">
-                Si tu email está registrado, recibirás un enlace en los próximos minutos
+                Si el correo está registrado, recibirás un enlace de recuperación.
               </p>
             </>
-          ) : (
+          ) : status === 'rate-limit' ? (
              <>
                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                <p className="text-xs text-red-500/90 leading-relaxed font-body">
-                 Demasiados intentos. Espera unos minutos antes de intentarlo de nuevo
+                 Has alcanzado el límite de intentos. Intenta de nuevo en unos minutos.
                </p>
              </>
-          )}
+          ) : status === 'error' ? (
+             <>
+               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+               <p className="text-xs text-red-500/90 leading-relaxed font-body">
+                 {errorMsg}
+               </p>
+             </>
+          ) : null}
         </div>
       )}
 

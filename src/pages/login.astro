@@ -415,11 +415,15 @@ import Button from '../components/ui/Button.astro';
             resendBtn.textContent = 'Enviando...';
             try {
               await authService.resendConfirmation(emailInput.value);
-              showToast('Correo reenviado con éxito', 'success');
+              showToast('Si el correo está registrado y no ha sido confirmado, recibirás un enlace.', 'success');
               resendBtn.textContent = '¡Enviado!';
               resendBtn.classList.add('text-green-500');
-            } catch (resendErr) {
-              showToast('Error al reenviar. Intenta más tarde.', 'error');
+            } catch (resendErr: any) {
+              if (resendErr.statusCode === 429) {
+                showToast('Has alcanzado el límite de intentos. Intenta de nuevo en unos minutos.', 'error');
+              } else {
+                showToast('Error al reenviar. Intenta más tarde.', 'error');
+              }
               resendBtn.textContent = 'Reenviar de nuevo';
             }
           });
