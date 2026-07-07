@@ -1,0 +1,36 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { AdminUsersTable } from '../../components/admin/AdminUsersTable';
+
+
+---
+
+<Layout title="Gestión de Usuarios | Élite Educativa">
+  <main class="min-h-screen bg-slate-50 dark:bg-slate-900/50 pt-[100px] pb-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="mb-8">
+        <h1 class="text-3xl sm:text-4xl font-display text-slate-900 dark:text-white mb-2">
+          Gestión de Usuarios
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm sm:text-base max-w-2xl">
+          Administra los perfiles registrados en la plataforma, cambia sus roles y activa o desactiva sus cuentas.
+        </p>
+      </div>
+      
+      <div class="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <AdminUsersTable client:load />
+      </div>
+
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // Fallback de seguridad del lado del cliente
+  import { authService } from '../../services/auth.service';
+  const user = authService.getUser();
+  if (!user || user.role !== 'ADMIN') {
+    window.location.href = '/acceso-denegado';
+  }
+</script>
