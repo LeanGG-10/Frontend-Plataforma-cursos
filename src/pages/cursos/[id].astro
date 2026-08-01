@@ -1,0 +1,282 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/ui/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import { formatPrice } from '../../utils/format';
+import CourseCTA from '../../components/courses/CourseCTA';
+
+const { id } = Astro.params;
+const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+
+let course: any = null;
+
+try {
+  const response = await fetch(`${API_URL}/courses/${id}`);
+  
+  if (!response.ok) {
+    return Astro.redirect('/404');
+  }
+
+  course = await response.json();
+} catch (error) {
+  console.error('[SSR Error] Failed to fetch course:', error);
+  return Astro.redirect('/404');
+}
+
+if (!course) return Astro.redirect('/404');
+
+// Safe fallbacks for missing properties
+const coverImage = course.display?.cover_image || course.display?.coverImage || course.cover_image || course.coverImage;
+const learningObjectives = course.metadata?.learningObjectives || [];
+const requirements = course.metadata?.requirements || [];
+const language = course.metadata?.language || 'Español';
+const duration = course.course?.duration || course.duration || course.metadata?.duration || 0;
+const averageRating = course.metadata?.averageRating || 0;
+const totalReviews = course.metadata?.totalReviews || 0;
+const sections = course.sections || [];
+const instructorName = course.course?.instructor || course.instructor?.name || course.instructor || 'Instructor de Élite Educativa';
+
+function formatDuration(minutes: number) {
+  if (minutes < 60) return `${minutes} min`;
+  const hrs = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hrs}h ${mins > 0 ? mins + 'm' : ''}`;
+}
+---
+
+<Layout title={`${course.title} | Élite Educativa`}>
+  <Navbar />
+  
+  <main class="pt-[72px] min-h-screen bg-[#F7F2E8]">
+    <!-- Hero Section -->
+    <section class="bg-primary text-white py-12 md:py-20 relative overflow-hidden">
+      <!-- Decorative background elements -->
+      <div class="absolute inset-0 opacity-10 pointer-events-none">
+        <div class="absolute top-0 right-0 w-96 h-96 bg-secondary rounded-full filter blur-[100px] translate-x-1/2 -translate-y-1/2"></div>
+      </div>
+
+      <div class="container mx-auto px-6 relative z-10">
+        <!-- Breadcrumbs -->
+        <nav class="flex mb-8 text-[10px] uppercase tracking-[0.3em] text-white/50 font-bold">
+          <a href="/" class="hover:text-secondary transition-colors cursor-pointer">Inicio</a>
+          <span class="mx-4">/</span>
+          <a href="/cursos" class="hover:text-secondary transition-colors cursor-pointer">Cursos</a>
+          <span class="mx-4 text-secondary">/</span>
+          <span class="text-white/80">{course.title}</span>
+        </nav>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+          <div class="lg:col-span-8 space-y-6">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-display font-bold leading-tight">
+              {course.title}
+            </h1>
+            <p class="text-lg md:text-xl font-light text-white/80 max-w-3xl leading-relaxed">
+              {course.description}
+            </p>
+            
+            <div class="flex flex-wrap items-center gap-4 text-sm font-bold mt-6">
+              {averageRating > 0 && (
+                <div class="flex items-center gap-1 text-secondary">
+                  <span class="text-lg">{Number(averageRating).toFixed(1)}</span>
+                  <div class="flex">
+                    {[1,2,3,4,5].map(star => (
+                      <svg class={`w-4 h-4 ${star <= Math.round(averageRating) ? 'text-secondary' : 'text-white/20'}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <span class="text-white/50 text-xs ml-1 font-normal tracking-wide">({totalReviews} reseñas)</span>
+                </div>
+              )}
+              
+              <div class="flex items-center gap-2 text-white/80 bg-white/10 px-3 py-1.5 rounded-full">
+                <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                {language}
+              </div>
+              
+              <div class="flex items-center gap-2 text-white/80 bg-white/10 px-3 py-1.5 rounded-full">
+                <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                {duration} {duration === 1 ? 'hora' : 'horas'}
+              </div>
+              
+              {course.level && (
+                <div class="flex items-center gap-2 text-white/80 bg-white/10 px-3 py-1.5 rounded-full">
+                  <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                  {course.level}
+                </div>
+              )}
+            </div>
+
+            <div class="pt-6 flex items-center gap-4">
+              <div class="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold text-lg border border-secondary/30">
+                {instructorName.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p class="text-[10px] uppercase tracking-widest text-white/50 font-bold">Instructor</p>
+                <p class="font-display text-lg italic text-white/90">{instructorName}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-4 relative z-20">
+            <div class="aspect-video rounded-[20px] overflow-hidden shadow-xl border border-white/10 bg-white/5 group">
+              {coverImage ? (
+                <img 
+                  src={coverImage} 
+                  alt={course.title} 
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+              ) : (
+                <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#C9A44A] to-[#8C6D23] text-[#F7F2E8]">
+                  <span class="text-6xl opacity-50 mb-4">🎓</span>
+                  <span class="text-xs font-bold uppercase tracking-[0.2em] opacity-80 text-center px-4">{course.title}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Content Section -->
+    <div class="container mx-auto px-6 py-12 md:py-16">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+        
+        <!-- Left Column: Details -->
+        <div class="lg:col-span-8 space-y-16">
+          
+          <!-- Lo que aprenderás -->
+          {learningObjectives && learningObjectives.length > 0 && (
+            <section>
+              <h2 class="text-3xl font-display font-bold text-primary mb-6">Lo que aprenderás</h2>
+              <div class="bg-white/60 backdrop-blur-md p-8 rounded-[20px] border border-white shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {learningObjectives.map((obj: string) => (
+                    <div class="flex items-start gap-3">
+                      <svg class="w-5 h-5 text-[#2ecc71] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                      <span class="text-primary/80 leading-relaxed text-sm">{obj}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          <!-- Requisitos -->
+          {requirements && requirements.length > 0 && (
+            <section>
+              <h2 class="text-2xl font-display font-bold text-primary mb-4">Requisitos previos</h2>
+              <ul class="space-y-3">
+                {requirements.map((req: string) => (
+                  <li class="flex items-center gap-3">
+                    <span class="w-1.5 h-1.5 rounded-full bg-secondary flex-shrink-0"></span>
+                    <span class="text-primary/80">{req}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <!-- Temario (Acordeón) -->
+          {sections && sections.length > 0 && (
+            <section>
+              <div class="flex items-end justify-between mb-6">
+                <h2 class="text-3xl font-display font-bold text-primary">Contenido del Curso</h2>
+                <div class="text-sm font-bold text-primary/50">
+                  {sections.length} secciones • {sections.reduce((acc: number, sec: any) => acc + (sec.lessons?.length || 0), 0)} clases
+                </div>
+              </div>
+              
+              <div class="space-y-4">
+                {sections.map((section: any, idx: number) => (
+                  <details class="group bg-white/60 backdrop-blur-md rounded-xl border border-white shadow-sm overflow-hidden" open={idx === 0}>
+                    <summary class="flex justify-between items-center font-bold cursor-pointer list-none p-5 hover:bg-white/80 transition-colors">
+                      <div class="flex items-center gap-4">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/5 text-primary text-sm font-bold">{idx + 1}</span>
+                        <span class="text-primary text-lg">{section.title}</span>
+                      </div>
+                      <div class="flex items-center gap-4">
+                        <span class="text-xs text-primary/40 uppercase tracking-widest font-bold hidden md:block">
+                          {section.lessons?.length || 0} lecciones
+                        </span>
+                        <span class="transition group-open:rotate-180">
+                          <svg fill="none" height="24" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                        </span>
+                      </div>
+                    </summary>
+                    <div class="bg-white/30 px-5 pb-5 pt-1 text-primary/70">
+                      <ul class="space-y-2 mt-2">
+                        {section.lessons && section.lessons.map((lesson: any) => (
+                          <li class="flex items-center justify-between p-3 hover:bg-white/50 rounded-lg transition-colors border border-transparent hover:border-primary/5">
+                            <div class="flex items-center gap-3">
+                              {lesson.isFree ? (
+                                <svg class="w-4 h-4 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                              ) : (
+                                <svg class="w-4 h-4 text-primary/30 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                              )}
+                              <span class="text-sm font-medium">{lesson.title}</span>
+                            </div>
+                            <span class="text-xs text-primary/40 font-mono">
+                              {lesson.duration ? formatDuration(Math.ceil(lesson.duration / 60)) : '--:--'}
+                            </span>
+                          </li>
+                        ))}
+                        {(!section.lessons || section.lessons.length === 0) && (
+                          <li class="text-sm text-primary/40 italic p-2">No hay lecciones en esta sección.</li>
+                        )}
+                      </ul>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+
+        <!-- Right Column: Sticky Sidebar with CTA -->
+        <div class="lg:col-span-4 relative">
+          <div class="sticky top-[100px] flex flex-col gap-6">
+            <!-- React CTA Island -->
+            <CourseCTA 
+              client:load 
+              productId={course.id} 
+              price={course.price || 0} 
+            />
+
+            <!-- Guarantees -->
+            <div class="flex flex-col gap-4 text-center px-4 py-2">
+              <p class="text-[10px] uppercase tracking-widest text-primary/40 font-bold">Este curso incluye:</p>
+              <ul class="text-sm text-primary/70 space-y-3 font-medium">
+                <li class="flex items-center gap-3 justify-center">
+                  <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Acceso de por vida
+                </li>
+                <li class="flex items-center gap-3 justify-center">
+                  <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
+                  Certificado de finalización
+                </li>
+                <li class="flex items-center gap-3 justify-center">
+                  <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                  Acceso en dispositivos móviles
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  h1, h2, h3, .font-display {
+    font-family: 'Cormorant Garamond', serif;
+  }
+  
+  .font-body {
+    font-family: 'Raleway', sans-serif;
+  }
+</style>

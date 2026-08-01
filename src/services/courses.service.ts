@@ -122,6 +122,39 @@ class CoursesService {
     }
     return response.json();
   }
+
+  async getCourseAccessStatus(id: string, token: string, sessionId: string) {
+    const response = await fetch(`${API_URL}/products/${id}/access-status`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'x-session-id': sessionId || '',
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403 || response.status === 404) {
+        return { hasAccess: false, isOwner: false, role: 'STUDENT' };
+      }
+      throw new Error('Error al verificar acceso al curso');
+    }
+
+    return response.json();
+  }
+
+  async getPublicCourseDetails(id: string) {
+    const response = await fetch(`${API_URL}/courses/${id}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener los detalles del curso');
+    }
+
+    return response.json();
+  }
 }
 
 export const coursesService = new CoursesService();

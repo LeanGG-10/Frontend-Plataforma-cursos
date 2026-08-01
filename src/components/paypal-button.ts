@@ -313,6 +313,7 @@ export function setupPayPalButton(wrapperElement: HTMLDivElement) {
 
             const captureData: CaptureOrderResponse = await res.json();
             if (captureData.success) {
+              wrapper.dispatchEvent(new CustomEvent('paymentSuccess'));
               showElement(feedbackBanner);
               setupReadMode();
             } else {

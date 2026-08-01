@@ -4,7 +4,11 @@ import { isEditing, toggleEditing } from '../../store/adminStore';
 import { Settings, X } from 'lucide-react';
 import { USER_STORAGE_KEY } from '../../services/auth.service';
 
-const AdminToggle = () => {
+interface AdminToggleProps {
+  label?: string; // ej. "Cursos" o "Libros"
+}
+
+const AdminToggle = ({ label = 'Contenido' }: AdminToggleProps) => {
   const editing = useStore(isEditing);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -79,7 +83,7 @@ const AdminToggle = () => {
       ) : (
         <>
           <Settings size={16} />
-          <span>Gestionar Libros</span>
+          <span>Gestionar {label}</span>
         </>
       )}
     </button>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { coursesService } from '../../services/courses.service';
-import { Edit2, Users } from 'lucide-react';
+import { Edit2, Users, Plus } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -47,6 +47,18 @@ export const MyCoursesGrid: React.FC = () => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+      <a
+        href="/cursos/crear"
+        className="group h-full min-h-[300px] border-2 border-dashed border-secondary/30 rounded-[12px] flex flex-col items-center justify-center gap-4 bg-secondary/5 hover:bg-secondary/10 hover:border-secondary transition-all duration-500 cursor-pointer p-8 no-underline"
+      >
+        <div className="w-16 h-16 rounded-full bg-secondary text-primary flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-500">
+          <Plus size={32} />
+        </div>
+        <div className="text-center">
+          <span className="block text-lg font-display font-bold text-primary italic">Crear Curso</span>
+          <span className="text-xs font-body text-primary/40 uppercase tracking-widest mt-1">Nuevo programa</span>
+        </div>
+      </a>
       {courses.map((course) => (
         <div 
           key={course.id}

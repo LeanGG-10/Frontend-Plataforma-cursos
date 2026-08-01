@@ -17,18 +17,23 @@ export default function CourseCreationForm({ categories }: Props) {
     title: '',
     description: '',
     courseCategoryId: '',
-    price: 0,
+    price: '' as unknown as number,
     status: 'DRAFT',
     instructor: '', 
-    duration: 0,
+    duration: '' as unknown as number,
     level: 'Principiante',
     totalLessons: 0,
   });
 
+  const [userRole, setUserRole] = useState<string>('');
+
   useEffect(() => {
     const user = authService.getUser();
-    if (user?.name) {
-      setFormData(prev => ({ ...prev, instructor: user.name }));
+    if (user) {
+      setUserRole(user.role);
+    }
+    if (user?.full_name) {
+      setFormData(prev => ({ ...prev, instructor: user.full_name }));
     }
   }, []);
 
@@ -64,7 +69,7 @@ export default function CourseCreationForm({ categories }: Props) {
       setErrors(prev => ({ ...prev, description: '' }));
     }
 
-    const val = type === 'number' ? Number(value) : value;
+    const val = type === 'number' ? (value === '' ? ('' as unknown as number) : Number(value)) : value;
     setFormData(prev => ({ ...prev, [name]: val }));
   };
 
@@ -76,7 +81,6 @@ export default function CourseCreationForm({ categories }: Props) {
     if (!formData.instructor.trim()) newErrors.instructor = 'El instructor es obligatorio';
     if (formData.price < 0) newErrors.price = 'El precio no puede ser negativo';
     if (formData.duration <= 0) newErrors.duration = 'La duración debe ser mayor a 0';
-    if (formData.totalLessons <= 0) newErrors.totalLessons = 'El total de lecciones debe ser mayor a 0';
 
     // Portada ahora es opcional
 
@@ -126,11 +130,16 @@ export default function CourseCreationForm({ categories }: Props) {
     try {
       await coursesService.createCourse({
         ...formData,
+        price: Number(formData.price) || 0,
+        duration: Number(formData.duration) || 0,
         status: action,
         overrideDuplicateWarning: overrideDuplicate
       });
-      alert(`Curso ${action === 'PUBLISHED' ? 'publicado' : 'guardado'} con éxito!`);
-      window.location.href = '/courses'; // Redirección tras éxito
+      const successMessage = userRole === 'PROFESOR'
+        ? 'Tu curso se guardará como borrador. Un administrador deberá revisarlo y publicarlo.'
+        : `Curso ${action === 'PUBLISHED' ? 'publicado' : 'guardado'} con éxito!`;
+      alert(successMessage);
+      window.location.href = '/cursos'; // Redirección tras éxito
     } catch (err: any) {
       // CA-20: La Trampa del 409
       if (err.isDuplicateWarning) {
@@ -225,8 +234,13 @@ export default function CourseCreationForm({ categories }: Props) {
                 id="instructor"
                 name="instructor"
                 value={formData.instructor}
-                readOnly
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed transition-all focus:outline-none"
+                readOnly={userRole === 'PROFESOR'}
+                onChange={handleInputChange}
+                className={`w-full px-4 py-2.5 rounded-xl border transition-all focus:outline-none ${
+                  userRole === 'PROFESOR'
+                    ? 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+                }`}
               />
               {errors.instructor && <span className="text-xs text-red-500">{errors.instructor}</span>}
             </div>
@@ -351,31 +365,18 @@ export default function CourseCreationForm({ categories }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label htmlFor="duration" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Minutos Totales</label>
-              <input
-                type="number"
-                id="duration"
-                name="duration"
-                min="0"
-                value={formData.duration}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="totalLessons" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Nº Lecciones</label>
-              <input
-                type="number"
-                id="totalLessons"
-                name="totalLessons"
-                min="0"
-                value={formData.totalLessons}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-              />
-            </div>
+          <div className="space-y-1.5">
+            <label htmlFor="duration" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Horas Totales</label>
+            <input
+              type="number"
+              id="duration"
+              name="duration"
+              min="0"
+              value={formData.duration}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+            />
+            {errors.duration && <span className="text-xs text-red-500">{errors.duration}</span>}
           </div>
         </div>
       </form>
@@ -396,6 +397,7 @@ export default function CourseCreationForm({ categories }: Props) {
           )}
         </button>
         
+        {userRole !== 'PROFESOR' && (
         <button
           type="button"
           disabled={isSubmitting || uploadingImage}
@@ -411,6 +413,7 @@ export default function CourseCreationForm({ categories }: Props) {
             <><Send size={18} /> Publicar</>
           )}
         </button>
+        )}
       </div>
 
       {/* CA-20: Modal de Confirmación de Duplicados */}

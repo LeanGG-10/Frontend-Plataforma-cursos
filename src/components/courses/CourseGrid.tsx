@@ -33,7 +33,7 @@ const CourseCard: React.FC<{
   return (
     <div 
       className={`group cursor-pointer p-6 rounded-[12px] transition-all duration-500 border border-[#C9A44A]/5 bg-[#F7F2E8] text-[#0F172A] shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] hover:scale-105 flex flex-col h-full relative overflow-hidden`}
-      onClick={() => window.location.href = `/courses/${course.id}`}
+      onClick={() => window.location.href = `/cursos/${course.id}`}
     >
       <div className="aspect-video mb-6 overflow-hidden relative rounded-[8px] bg-white/10">
         {course.coverImage ? (
@@ -350,7 +350,7 @@ export const CourseGrid: React.FC = () => {
         price: Number(formData.price),
         duration: Number(formData.duration),
         courseCategoryId: formData.courseCategoryId || (categories.length > 0 ? categories[0].id : undefined),
-        instructor: currentUser?.name || 'Instructor Genérico',
+        instructor: currentUser?.full_name || 'Instructor Genérico',
         level: formData.level,
         status: 'PUBLISHED', // Direct to published
         totalLessons: 1, // Default value
@@ -532,7 +532,7 @@ export const CourseGrid: React.FC = () => {
               type="text" 
               readOnly
               className="w-full bg-tertiary/80 border border-secondary/10 rounded-[10px] px-4 py-3 text-primary/60 cursor-not-allowed"
-              value={currentUser?.name || 'Instructor Genérico'}
+              value={currentUser?.full_name || 'Instructor Genérico'}
             />
           </div>
 
