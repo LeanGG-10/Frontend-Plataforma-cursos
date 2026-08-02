@@ -176,6 +176,88 @@ class CoursesService {
 
     return response.json();
   }
+
+  // ==========================================
+  // STRUCTURE (SECTIONS & LESSONS)
+  // ==========================================
+
+  async createSection(courseId: string, payload: { title: string; position?: number }) {
+    const response = await fetch(`${API_URL}/courses/${courseId}/sections`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('Error al crear la sección');
+    return response.json();
+  }
+
+  async updateSection(courseId: string, sectionId: string, payload: { title: string }) {
+    const response = await fetch(`${API_URL}/courses/${courseId}/sections/${sectionId}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('Error al actualizar la sección');
+    return response.json();
+  }
+
+  async deleteSection(courseId: string, sectionId: string) {
+    const response = await fetch(`${API_URL}/courses/${courseId}/sections/${sectionId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Error al eliminar la sección');
+    return response.json();
+  }
+
+  async reorderSections(courseId: string, sections: { id: string; position: number }[]) {
+    const response = await fetch(`${API_URL}/courses/${courseId}/sections/reorder`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ sections }),
+    });
+    if (!response.ok) throw new Error('Error al reordenar las secciones');
+    return response.json();
+  }
+
+  async createLesson(sectionId: string, payload: { title: string; position?: number }) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('Error al crear la lección');
+    return response.json();
+  }
+
+  async updateLesson(sectionId: string, lessonId: string, payload: { title: string }) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('Error al actualizar la lección');
+    return response.json();
+  }
+
+  async deleteLesson(sectionId: string, lessonId: string) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Error al eliminar la lección');
+    return response.json();
+  }
+
+  async reorderLessons(sectionId: string, lessons: { id: string; position: number }[]) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/reorder`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ lessons }),
+    });
+    if (!response.ok) throw new Error('Error al reordenar las lecciones');
+    return response.json();
+  }
 }
 
 export const coursesService = new CoursesService();

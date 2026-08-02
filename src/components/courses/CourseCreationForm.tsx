@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { UploadCloud, Image as ImageIcon, X, Loader2, AlertCircle, Save, Send, BookOpen, CheckCircle2, Trash2, Plus } from 'lucide-react';
 import { coursesService, type CreateCoursePayload } from '../../services/courses.service';
 import { authService } from '../../services/auth.service';
+import CourseStructureEditor from './CourseStructureEditor';
 
 interface Category {
   id: string;
@@ -36,6 +37,7 @@ export default function CourseCreationForm({ courseId, categories }: Props) {
   });
 
   const [isLoadingCourse, setIsLoadingCourse] = useState(!!courseId);
+  const [activeTab, setActiveTab] = useState<'INFO' | 'STRUCTURE'>('INFO');
 
   const [userRole, setUserRole] = useState<string>('');
 
@@ -285,7 +287,25 @@ export default function CourseCreationForm({ courseId, categories }: Props) {
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 md:p-8 font-sans">
-      <form className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      {/* Tabs */}
+      <div className="flex border-b border-slate-200 dark:border-slate-800 mb-6 overflow-x-auto">
+        <button 
+          onClick={() => setActiveTab('INFO')}
+          className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 whitespace-nowrap ${activeTab === 'INFO' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
+        >
+          Información General
+        </button>
+        <button 
+          onClick={() => setActiveTab('STRUCTURE')}
+          className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 whitespace-nowrap ${activeTab === 'STRUCTURE' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
+        >
+          Temario y Módulos
+        </button>
+      </div>
+
+      <div className={activeTab === 'INFO' ? 'block' : 'hidden'}>
+        <form className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Columna Principal - Datos Generales */}
         <div className="lg:col-span-2 space-y-6">
@@ -585,7 +605,6 @@ export default function CourseCreationForm({ courseId, categories }: Props) {
         </div>
       </form>
 
-      {/* Footer / Acciones */}
       <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col-reverse sm:flex-row justify-end gap-4 items-center">
         {/* CA-21: Loading state buttons */}
         <button
@@ -619,6 +638,29 @@ export default function CourseCreationForm({ courseId, categories }: Props) {
         </button>
         )}
       </div>
+      </div>
+
+      {activeTab === 'STRUCTURE' && (
+        <div className="animate-in fade-in duration-300">
+          {courseId ? (
+            <CourseStructureEditor courseId={courseId} />
+          ) : (
+            <div className="py-16 flex flex-col items-center justify-center text-center bg-slate-50 dark:bg-slate-800/30 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+              <BookOpen className="w-12 h-12 text-slate-400 mb-4" />
+              <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">Guarda tu curso primero</h3>
+              <p className="text-slate-500 dark:text-slate-400 max-w-md">
+                Guarda la información general del curso como borrador para comenzar a agregar módulos y lecciones.
+              </p>
+              <button 
+                onClick={() => setActiveTab('INFO')}
+                className="mt-6 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-colors"
+              >
+                Volver a Información General
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* CA-20: Modal de Confirmación de Duplicados */}
       {showDuplicateModal && (
