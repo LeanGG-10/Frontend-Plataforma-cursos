@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { UploadCloud, Image as ImageIcon, X, Loader2, AlertCircle, Save, Send, BookOpen, CheckCircle2 } from 'lucide-react';
+import { UploadCloud, Image as ImageIcon, X, Loader2, AlertCircle, Save, Send, BookOpen, CheckCircle2, Trash2, Plus } from 'lucide-react';
 import { coursesService, type CreateCoursePayload } from '../../services/courses.service';
 import { authService } from '../../services/auth.service';
 
@@ -9,11 +9,18 @@ interface Category {
 }
 
 interface Props {
+  courseId?: string;
   categories: Category[];
 }
 
-export default function CourseCreationForm({ categories }: Props) {
-  const [formData, setFormData] = useState<CreateCoursePayload>({
+interface CourseFormData extends CreateCoursePayload {
+  language: string;
+  learning_objectives: string[];
+  requirements: string[];
+}
+
+export default function CourseCreationForm({ courseId, categories }: Props) {
+  const [formData, setFormData] = useState<CourseFormData>({
     title: '',
     description: '',
     courseCategoryId: '',
@@ -23,7 +30,12 @@ export default function CourseCreationForm({ categories }: Props) {
     duration: '' as unknown as number,
     level: 'Principiante',
     totalLessons: 0,
+    language: 'Español',
+    learning_objectives: [''],
+    requirements: [''],
   });
+
+  const [isLoadingCourse, setIsLoadingCourse] = useState(!!courseId);
 
   const [userRole, setUserRole] = useState<string>('');
 
@@ -37,6 +49,74 @@ export default function CourseCreationForm({ categories }: Props) {
     }
   }, []);
 
+  useEffect(() => {
+    if (courseId) {
+      coursesService.getPublicCourseDetails(courseId)
+        .then(data => {
+          setFormData(prev => ({
+            ...prev,
+            title: data.title,
+            description: data.description || '',
+            courseCategoryId: data.course?.course_category_id || '',
+            price: data.price,
+            status: data.status,
+            instructor: data.course?.instructor || '',
+            duration: data.course?.duration || 0,
+            level: (data.course?.level.charAt(0) + data.course?.level.slice(1).toLowerCase()) as any,
+            totalLessons: data.course?.total_lessons || 0,
+            language: data.course?.language || 'Español',
+            learning_objectives: data.course?.learning_objectives?.length ? data.course.learning_objectives : [''],
+            requirements: data.course?.requirements?.length ? data.course.requirements : [''],
+          }));
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Error al cargar el curso');
+        })
+        .finally(() => {
+          setIsLoadingCourse(false);
+        });
+    }
+  }, [courseId]);
+
+  const handleListChange = (field: 'learning_objectives' | 'requirements', index: number, value: string) => {
+    setFormData(prev => {
+      const newList = [...prev[field]];
+      newList[index] = value;
+      return { ...prev, [field]: newList };
+    });
+  };
+
+  const addListItem = (field: 'learning_objectives' | 'requirements') => {
+    setFormData(prev => ({ ...prev, [field]: [...prev[field], ''] }));
+  };
+
+  // Delete modal state
+  const [deleteContext, setDeleteContext] = useState<{ field: 'learning_objectives' | 'requirements', index: number } | null>(null);
+  const [successModal, setSuccessModal] = useState<{ visible: boolean, message: string }>({ visible: false, message: '' });
+
+  const confirmRemoveListItem = (field: 'learning_objectives' | 'requirements', index: number) => {
+    setDeleteContext({ field, index });
+  };
+
+  const executeRemove = () => {
+    if (!deleteContext) return;
+    const { field, index } = deleteContext;
+    
+    setFormData(prev => {
+      const newList = prev[field].filter((_, i) => i !== index);
+      if (newList.length === 0) newList.push('');
+      return { ...prev, [field]: newList };
+    });
+    
+    const isObjective = field === 'learning_objectives';
+    setDeleteContext(null);
+    setSuccessModal({
+      visible: true,
+      message: isObjective ? "Objetivo de aprendizaje eliminado correctamente" : "Requisito eliminado correctamente"
+    });
+  };
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -47,6 +127,10 @@ export default function CourseCreationForm({ categories }: Props) {
   const [duplicateMessage, setDuplicateMessage] = useState('');
   const [pendingAction, setPendingAction] = useState<'DRAFT' | 'PUBLISHED' | null>(null);
   const [submitAction, setSubmitAction] = useState<'DRAFT' | 'PUBLISHED'>('DRAFT');
+
+  // Submit modal state
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState<{ visible: boolean, action: 'DRAFT' | 'PUBLISHED' | null }>({ visible: false, action: null });
+  const [submitStatus, setSubmitStatus] = useState<{ visible: boolean, status: 'LOADING' | 'SUCCESS', message: string, redirectUrl: string }>({ visible: false, status: 'LOADING', message: '', redirectUrl: '' });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -127,20 +211,44 @@ export default function CourseCreationForm({ categories }: Props) {
     if (!validateForm(action)) return;
 
     setIsSubmitting(true);
+    setSubmitStatus({ visible: true, status: 'LOADING', message: 'Guardando cambios...', redirectUrl: '' });
+    
     try {
-      await coursesService.createCourse({
+      const filteredObjectives = formData.learning_objectives.filter(o => o.trim() !== '');
+      const filteredRequirements = formData.requirements.filter(o => o.trim() !== '');
+
+      const payload = {
         ...formData,
         price: Number(formData.price) || 0,
         duration: Number(formData.duration) || 0,
         status: action,
-        overrideDuplicateWarning: overrideDuplicate
-      });
-      const successMessage = userRole === 'PROFESOR'
-        ? 'Tu curso se guardará como borrador. Un administrador deberá revisarlo y publicarlo.'
-        : `Curso ${action === 'PUBLISHED' ? 'publicado' : 'guardado'} con éxito!`;
-      alert(successMessage);
-      window.location.href = '/cursos'; // Redirección tras éxito
+        overrideDuplicateWarning: overrideDuplicate,
+        learning_objectives: filteredObjectives,
+        requirements: filteredRequirements,
+      };
+
+      if (courseId) {
+        await coursesService.updateCourse(courseId, payload);
+        setSubmitStatus({
+          visible: true,
+          status: 'SUCCESS',
+          message: 'Curso actualizado con éxito!',
+          redirectUrl: `/cursos/${courseId}`
+        });
+      } else {
+        await coursesService.createCourse(payload);
+        const successMessage = userRole === 'PROFESOR'
+          ? 'Tu curso se guardará como borrador. Un administrador deberá revisarlo y publicarlo.'
+          : `Curso ${action === 'PUBLISHED' ? 'publicado' : 'guardado'} con éxito!`;
+        setSubmitStatus({
+          visible: true,
+          status: 'SUCCESS',
+          message: successMessage,
+          redirectUrl: '/cursos'
+        });
+      }
     } catch (err: any) {
+      setSubmitStatus(prev => ({ ...prev, visible: false }));
       // CA-20: La Trampa del 409
       if (err.isDuplicateWarning) {
         setDuplicateMessage(err.message);
@@ -157,8 +265,23 @@ export default function CourseCreationForm({ categories }: Props) {
   const onActionClick = (e: React.MouseEvent<HTMLButtonElement>, action: 'DRAFT' | 'PUBLISHED') => {
     e.preventDefault();
     setSubmitAction(action);
-    executeSubmit(action, false);
+    if (!validateForm(action)) return;
+
+    if (courseId) {
+      setShowSubmitConfirm({ visible: true, action });
+    } else {
+      executeSubmit(action, false);
+    }
   };
+
+  if (isLoadingCourse) {
+    return (
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 flex flex-col items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-4" />
+        <p className="text-slate-500 dark:text-slate-400">Cargando detalles del curso...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 md:p-8 font-sans">
@@ -222,6 +345,87 @@ export default function CourseCreationForm({ categories }: Props) {
                 {formData.description.length}/2000
               </span>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="language" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Idioma <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="language"
+              name="language"
+              value={formData.language}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2.5 rounded-xl border bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20 appearance-none"
+            >
+              <option value="Español">Español</option>
+              <option value="Inglés">Inglés</option>
+              <option value="Portugués">Portugués</option>
+            </select>
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Lo que aprenderás
+            </label>
+            {formData.learning_objectives.map((obj, i) => (
+              <div key={i} className="flex gap-2">
+                <input
+                  type="text"
+                  value={obj}
+                  onChange={(e) => handleListChange('learning_objectives', i, e.target.value)}
+                  placeholder="Ej. Crear aplicaciones escalables..."
+                  className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20"
+                />
+                <button
+                  type="button"
+                  onClick={() => confirmRemoveListItem('learning_objectives', i)}
+                  className="p-2 text-slate-400 hover:text-red-500 transition-colors bg-slate-50 hover:bg-red-50 dark:bg-slate-800/50 dark:hover:bg-red-900/20 rounded-xl"
+                  title="Eliminar objetivo"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => addListItem('learning_objectives')}
+              className="text-sm text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1 hover:underline"
+            >
+              <Plus size={16} /> Agregar objetivo
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Requisitos previos
+            </label>
+            {formData.requirements.map((req, i) => (
+              <div key={i} className="flex gap-2">
+                <input
+                  type="text"
+                  value={req}
+                  onChange={(e) => handleListChange('requirements', i, e.target.value)}
+                  placeholder="Ej. Conocimientos básicos de HTML..."
+                  className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20"
+                />
+                <button
+                  type="button"
+                  onClick={() => confirmRemoveListItem('requirements', i)}
+                  className="p-2 text-slate-400 hover:text-red-500 transition-colors bg-slate-50 hover:bg-red-50 dark:bg-slate-800/50 dark:hover:bg-red-900/20 rounded-xl"
+                  title="Eliminar requisito"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => addListItem('requirements')}
+              className="text-sm text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1 hover:underline"
+            >
+              <Plus size={16} /> Agregar requisito
+            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -444,6 +648,135 @@ export default function CourseCreationForm({ categories }: Props) {
                 className="px-4 py-2 rounded-lg font-medium text-white bg-amber-600 hover:bg-amber-700 transition-colors"
               >
                 Sí, guardar de todos modos
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Submit Confirmation Modal */}
+      {showSubmitConfirm.visible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center mb-4">
+                <Save size={24} />
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Confirmar cambios</h3>
+              <p className="text-slate-600 dark:text-slate-300 text-sm">
+                ¿Estás seguro de que deseas continuar con los cambios realizados en el curso?
+              </p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-900/50 px-6 py-4 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setShowSubmitConfirm({ visible: false, action: null })}
+                className="px-4 py-2 rounded-lg font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSubmitConfirm({ visible: false, action: null });
+                  if (showSubmitConfirm.action) executeSubmit(showSubmitConfirm.action, false);
+                }}
+                className="px-4 py-2 rounded-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Submit Progress Modal */}
+      {submitStatus.visible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div className="p-8 text-center flex flex-col items-center">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 transition-colors duration-500 ${
+                submitStatus.status === 'LOADING' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'bg-green-100 dark:bg-green-900/30 text-green-600'
+              }`}>
+                {submitStatus.status === 'LOADING' ? (
+                  <Loader2 size={32} className="animate-spin" />
+                ) : (
+                  <CheckCircle2 size={32} className="animate-in zoom-in duration-300" />
+                )}
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                {submitStatus.status === 'LOADING' ? 'Procesando...' : '¡Éxito!'}
+              </h3>
+              <p className="text-slate-600 dark:text-slate-300 text-sm">{submitStatus.message}</p>
+            </div>
+            {submitStatus.status === 'SUCCESS' && (
+              <div className="bg-slate-50 dark:bg-slate-900/50 px-6 py-4 flex justify-center border-t border-slate-200 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => window.location.href = submitStatus.redirectUrl}
+                  className="w-full px-4 py-2.5 rounded-xl font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                >
+                  Continuar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteContext && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center mb-4">
+                <Trash2 size={24} />
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Confirmar eliminación</h3>
+              <p className="text-slate-600 dark:text-slate-300 text-sm">
+                {deleteContext.field === 'learning_objectives' 
+                  ? '¿Desea eliminar este objetivo de aprendizaje del curso?' 
+                  : '¿Desea eliminar este requisito del curso?'}
+              </p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-900/50 px-6 py-4 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setDeleteContext(null)}
+                className="px-4 py-2 rounded-lg font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={executeRemove}
+                className="px-4 py-2 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {successModal.visible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 flex items-center justify-center mb-4">
+                <CheckCircle2 size={24} />
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">¡Completado!</h3>
+              <p className="text-slate-600 dark:text-slate-300 text-sm">{successModal.message}</p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-900/50 px-6 py-4 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setSuccessModal({ visible: false, message: '' })}
+                className="px-4 py-2 rounded-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+              >
+                Continuar
               </button>
             </div>
           </div>

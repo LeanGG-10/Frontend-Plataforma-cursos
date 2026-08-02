@@ -2,8 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import CourseCreationForm from '../../components/courses/CourseCreationForm';
 
-
-
+const courseId = Astro.url.searchParams.get('id') || undefined;
 // Obtener categorías (llamada simulando servicio interno en SSR)
 const API_URL = import.meta.env.PUBLIC_API_URL;
 let initialCategories = [];
@@ -31,7 +30,7 @@ if (!initialCategories || initialCategories.length === 0) {
 }
 ---
 
-<Layout title="Crear Nuevo Curso | Élite Educativa">
+<Layout title={courseId ? "Editar Curso | Élite Educativa" : "Crear Nuevo Curso | Élite Educativa"}>
   <main class="min-h-screen bg-slate-50 dark:bg-slate-900/50 pt-[80px] pb-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
@@ -41,15 +40,17 @@ if (!initialCategories || initialCategories.length === 0) {
           <a href="/courses" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium">← Volver a mis cursos</a>
         </div>
         <h1 class="text-3xl sm:text-4xl font-display text-slate-900 dark:text-white mb-2">
-          Crear Nuevo Curso
+          {courseId ? "Editar Curso" : "Crear Nuevo Curso"}
         </h1>
         <p class="text-slate-500 dark:text-slate-400 text-sm sm:text-base max-w-2xl">
-          Configura los detalles de tu nuevo curso. Puedes guardarlo como borrador y publicarlo más tarde cuando esté listo.
+          {courseId 
+            ? "Actualiza los detalles de tu curso." 
+            : "Configura los detalles de tu nuevo curso. Puedes guardarlo como borrador y publicarlo más tarde cuando esté listo."}
         </p>
       </div>
       
       {/* Container del formulario React */}
-      <CourseCreationForm categories={initialCategories} client:load />
+      <CourseCreationForm courseId={courseId} categories={initialCategories} client:load />
 
     </div>
   </main>

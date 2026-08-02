@@ -27,12 +27,12 @@ if (!course) return Astro.redirect('/404');
 
 // Safe fallbacks for missing properties
 const coverImage = course.display?.cover_image || course.display?.coverImage || course.cover_image || course.coverImage;
-const learningObjectives = course.metadata?.learningObjectives || [];
-const requirements = course.metadata?.requirements || [];
-const language = course.metadata?.language || 'Español';
+const learningObjectives = course.course?.learning_objectives || course.metadata?.learningObjectives || [];
+const requirements = course.course?.requirements || course.metadata?.requirements || [];
+const language = course.course?.language || course.metadata?.language || 'Español';
 const duration = course.course?.duration || course.duration || course.metadata?.duration || 0;
-const averageRating = course.metadata?.averageRating || 0;
-const totalReviews = course.metadata?.totalReviews || 0;
+const averageRating = course.course?.average_rating || course.metadata?.averageRating || 0;
+const totalReviews = course.course?.total_reviews || course.metadata?.totalReviews || 0;
 const sections = course.sections || [];
 const instructorName = course.course?.instructor || course.instructor?.name || course.instructor || 'Instructor de Élite Educativa';
 

@@ -14,6 +14,12 @@ export interface CreateCoursePayload {
   overrideDuplicateWarning?: boolean;
 }
 
+export interface UpdateCoursePayload extends Partial<CreateCoursePayload> {
+  language?: string;
+  learning_objectives?: string[];
+  requirements?: string[];
+}
+
 class CoursesService {
   private getAuthHeaders(isMultipart = false) {
     if (typeof window === 'undefined') return {};
@@ -60,6 +66,21 @@ class CoursesService {
         throw { isDuplicateWarning: true, message: error.message };
       }
       throw new Error(error.message || 'Error al crear el curso');
+    }
+
+    return response.json();
+  }
+
+  async updateCourse(id: string, payload: UpdateCoursePayload) {
+    const response = await fetch(`${API_URL}/courses/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Error al actualizar el curso');
     }
 
     return response.json();
