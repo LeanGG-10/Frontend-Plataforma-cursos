@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, Plus, Edit2, Trash2, ArrowUp, ArrowDown, BookOpen, AlertCircle, CheckCircle2, ChevronRight, ChevronDown } from 'lucide-react';
 import { coursesService } from '../../services/courses.service';
+import LessonEditorModal from './LessonEditorModal';
 
 interface Lesson {
   id: string;
@@ -26,7 +27,8 @@ export default function CourseStructureEditor({ courseId }: Props) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   // Modals state
-  const [editingItem, setEditingItem] = useState<{ type: 'SECTION' | 'LESSON', id?: string, parentId?: string, title: string } | null>(null);
+  const [editingItem, setEditingItem] = useState<{ type: 'SECTION', id?: string, title: string } | null>(null);
+  const [editingLessonContext, setEditingLessonContext] = useState<{ sectionId: string, lesson?: any } | null>(null);
   const [deleteContext, setDeleteContext] = useState<{ type: 'SECTION' | 'LESSON', id: string, parentId?: string } | null>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,17 +116,6 @@ export default function CourseStructureEditor({ courseId }: Props) {
         } else {
           // Create
           await coursesService.createSection(courseId, { title: editingItem.title, position: sections.length });
-        }
-      } else {
-        // LESSON
-        if (editingItem.id && editingItem.parentId) {
-          // Edit
-          await coursesService.updateLesson(editingItem.parentId, editingItem.id, { title: editingItem.title });
-        } else if (editingItem.parentId) {
-          // Create
-          const section = sections.find(s => s.id === editingItem.parentId);
-          const pos = section ? section.lessons.length : 0;
-          await coursesService.createLesson(editingItem.parentId, { title: editingItem.title, position: pos });
         }
       }
       setEditingItem(null);
@@ -318,7 +309,7 @@ export default function CourseStructureEditor({ courseId }: Props) {
                           </div>
                           
                           <button 
-                            onClick={() => setEditingItem({ type: 'LESSON', id: lesson.id, parentId: section.id, title: lesson.title })}
+                            onClick={() => setEditingLessonContext({ sectionId: section.id, lesson })}
                             className="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors"
                           >
                             <Edit2 size={16} />
@@ -335,7 +326,7 @@ export default function CourseStructureEditor({ courseId }: Props) {
                   </div>
 
                   <button
-                    onClick={() => setEditingItem({ type: 'LESSON', parentId: section.id, title: '' })}
+                    onClick={() => setEditingLessonContext({ sectionId: section.id })}
                     className="flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors py-2 px-3 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
                   >
                     <Plus size={16} /> Agregar Lección
@@ -427,6 +418,20 @@ export default function CourseStructureEditor({ courseId }: Props) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Lesson Editor Modal */}
+      {editingLessonContext && (
+        <LessonEditorModal
+          courseId={courseId}
+          sectionId={editingLessonContext.sectionId}
+          lesson={editingLessonContext.lesson}
+          onClose={() => setEditingLessonContext(null)}
+          onSaveSuccess={async () => {
+            setEditingLessonContext(null);
+            await fetchStructure();
+          }}
+        />
       )}
 
     </div>

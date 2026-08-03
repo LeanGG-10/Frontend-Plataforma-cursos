@@ -230,13 +230,43 @@ class CoursesService {
     return response.json();
   }
 
-  async updateLesson(sectionId: string, lessonId: string, payload: { title: string }) {
+  async updateLesson(sectionId: string, lessonId: string, payload: any) {
     const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}`, {
       method: 'PATCH',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(payload),
     });
     if (!response.ok) throw new Error('Error al actualizar la lección');
+    return response.json();
+  }
+
+  async uploadLessonFile(sectionId: string, lessonId: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/upload`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(true),
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al subir el archivo de la lección');
+    }
+    return response.json();
+  }
+
+  async getLessonSignedUrl(sectionId: string, lessonId: string) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/signed-url`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al obtener la URL segura de la lección');
+    }
     return response.json();
   }
 
