@@ -288,6 +288,162 @@ class CoursesService {
     if (!response.ok) throw new Error('Error al reordenar las lecciones');
     return response.json();
   }
+
+  // ==========================================
+  // ASSIGNMENTS
+  // ==========================================
+
+  async getAssignmentStatus(sectionId: string, lessonId: string) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/assignments/status`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al obtener el estado de la tarea');
+    }
+    return response.json();
+  }
+
+  async startAssignment(sectionId: string, lessonId: string) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/assignments/start`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al iniciar la tarea');
+    }
+    return response.json();
+  }
+
+  async submitAssignment(sectionId: string, lessonId: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/assignments/submit`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(true),
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al enviar la tarea');
+    }
+    return response.json();
+  }
+
+  async getLessonSubmissions(sectionId: string, lessonId: string) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/assignments/submissions`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al obtener las entregas');
+    }
+    return response.json();
+  }
+
+  async gradeSubmission(sectionId: string, lessonId: string, submissionId: string, grade: number, feedback?: string) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/assignments/submissions/${submissionId}/grade`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ grade, feedback }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al calificar la tarea');
+    }
+    return response.json();
+  }
+
+  async submitReview(id: string, token: string) {
+    const sessionId = typeof window !== 'undefined' ? localStorage.getItem('activeSessionId') : '';
+    const response = await fetch(`${API_URL}/courses/${id}/submit-review`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'x-session-id': sessionId || '',
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al enviar a revisión');
+    }
+    return response.json();
+  }
+
+  async cancelReview(id: string, token: string) {
+    const sessionId = typeof window !== 'undefined' ? localStorage.getItem('activeSessionId') : '';
+    const response = await fetch(`${API_URL}/courses/${id}/cancel-review`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'x-session-id': sessionId || '',
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw { status: response.status, message: err.message || 'Error al cancelar la revisión' };
+    }
+    return response.json();
+  }
+
+  async getPendingCourses(token: string) {
+    const sessionId = typeof window !== 'undefined' ? localStorage.getItem('activeSessionId') : '';
+    const response = await fetch(`${API_URL}/admin/courses/pending`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'x-session-id': sessionId || '',
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al obtener cursos pendientes');
+    }
+    return response.json();
+  }
+
+  async approveCourse(id: string, token: string) {
+    const sessionId = typeof window !== 'undefined' ? localStorage.getItem('activeSessionId') : '';
+    const response = await fetch(`${API_URL}/courses/${id}/approve`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'x-session-id': sessionId || '',
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al aprobar el curso');
+    }
+    return response.json();
+  }
+
+  async rejectCourse(id: string, rejectionReason: string, token: string) {
+    const sessionId = typeof window !== 'undefined' ? localStorage.getItem('activeSessionId') : '';
+    const response = await fetch(`${API_URL}/courses/${id}/reject`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'x-session-id': sessionId || '',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ rejection_reason: rejectionReason }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al rechazar el curso');
+    }
+    return response.json();
+  }
 }
 
 export const coursesService = new CoursesService();

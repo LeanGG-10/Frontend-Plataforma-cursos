@@ -46,6 +46,9 @@ export default function CourseCTA({ productId, price }: CourseCTAProps) {
 
         const handlePaymentSuccess = () => {
           setAccessData(prev => prev ? { ...prev, hasAccess: true } : { hasAccess: true, isOwner: false, role: 'ESTUDIANTE' });
+          setTimeout(() => {
+            window.location.href = `/cursos/${productId}/aprender`;
+          }, 3000);
         };
         
         const wrapper = paypalWrapperRef.current;

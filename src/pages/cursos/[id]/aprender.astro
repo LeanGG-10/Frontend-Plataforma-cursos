@@ -1,0 +1,14 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import CourseLMSViewer from '../../../components/courses/CourseLMSViewer';
+
+const { id } = Astro.params;
+
+if (!id) return Astro.redirect('/404');
+---
+
+<Layout title="Aprender | Élite Educativa">
+  <main class="h-screen w-full bg-slate-900 text-slate-100 overflow-hidden font-sans">
+    <CourseLMSViewer client:only="react" courseId={id as string} />
+  </main>
+</Layout>

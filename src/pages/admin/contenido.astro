@@ -1,0 +1,38 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AdminCoursesPending from '../../components/admin/AdminCoursesPending';
+---
+
+<Layout title="Cursos Pendientes de Revisión | Élite Educativa">
+  <main class="min-h-screen bg-slate-50 dark:bg-slate-900/50 pt-[100px] pb-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="mb-8">
+        <h1 class="text-3xl sm:text-4xl font-display text-slate-900 dark:text-white mb-2">
+          Cursos Pendientes de Revisión
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm sm:text-base max-w-2xl font-sans">
+          Revisa y aprueba o rechaza los cursos enviados por los profesores antes de que sean visibles en el catálogo público.
+        </p>
+      </div>
+      
+      <AdminCoursesPending client:load />
+
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // Fallback de seguridad del lado del cliente
+  import { authService } from '../../services/auth.service';
+  const user = authService.getUser();
+  if (!user || user.role !== 'ADMIN') {
+    window.location.href = '/acceso-denegado';
+  }
+</script>
+
+<style>
+  h1, .font-display {
+    font-family: 'Cormorant Garamond', serif;
+  }
+</style>

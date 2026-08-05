@@ -105,7 +105,7 @@ export const UserMenu: React.FC = () => {
               <div className="px-4 py-2">
                 <p className="text-[10px] uppercase tracking-widest text-secondary font-semibold">ADMINISTRACIÓN</p>
               </div>
-              <a href="/admin/cursos" className="block px-4 py-2 text-sm text-tertiary/90 hover:bg-white/5 hover:text-white transition-colors">Contenido</a>
+              <a href="/admin/contenido" className="block px-4 py-2 text-sm text-tertiary/90 hover:bg-white/5 hover:text-white transition-colors">Contenido</a>
               <a href="/admin/usuarios" className="block px-4 py-2 text-sm text-tertiary/90 hover:bg-white/5 hover:text-white transition-colors">Usuarios</a>
             </div>
           )}

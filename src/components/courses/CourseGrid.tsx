@@ -16,6 +16,7 @@ interface Course {
   coverImage: string;
   categoryName: string;
   type: 'BOOK' | 'COURSE';
+  status?: string;
   course?: {
     instructor: string;
     level: 'PRINCIPIANTE' | 'INTERMEDIO' | 'AVANZADO' | string;
@@ -251,18 +252,21 @@ export const CourseGrid: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const countEl = document.getElementById('count');
-    if (countEl) countEl.textContent = courses.length.toString();
-  }, [courses]);
-
   const filteredCourses = courses.filter(course => {
+    // Only show published courses in the courses catalog
+    if (course.status !== 'PUBLISHED') return false;
+
     if (categoryFilter === 'Todas') return true;
     const courseCategory = typeof course.categoryName === 'string' 
       ? course.categoryName 
       : 'Curso';
     return courseCategory === categoryFilter;
   });
+
+  useEffect(() => {
+    const countEl = document.getElementById('count');
+    if (countEl) countEl.textContent = filteredCourses.length.toString();
+  }, [filteredCourses]);
 
   const resetForm = () => {
     setFormData({

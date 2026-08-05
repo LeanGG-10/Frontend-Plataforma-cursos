@@ -1,16 +1,18 @@
 import React, { useState, useRef } from 'react';
-import { Loader2, X, UploadCloud, FileText, Video, Package, Check, AlertCircle } from 'lucide-react';
+import { Loader2, X, UploadCloud, FileText, Video, Package, Check, AlertCircle, ClipboardList, Users } from 'lucide-react';
 import { coursesService } from '../../services/courses.service';
 
 interface Lesson {
   id?: string;
   title: string;
   description?: string;
-  content_type?: 'VIDEO' | 'DOCUMENT' | 'EXE_LEARNING';
+  content_type?: 'VIDEO' | 'DOCUMENT' | 'EXE_LEARNING' | 'ASSIGNMENT';
   is_published?: boolean;
   is_free_preview?: boolean;
   is_gradable?: boolean;
   max_score?: number;
+  assignment_duration_hours?: number;
+  allowed_file_types?: string;
 }
 
 interface Props {
@@ -30,6 +32,8 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
     is_free_preview: lesson?.is_free_preview ?? false,
     is_gradable: lesson?.is_gradable ?? false,
     max_score: lesson?.max_score ?? 10.0,
+    assignment_duration_hours: lesson?.assignment_duration_hours ?? 24,
+    allowed_file_types: lesson?.allowed_file_types ?? 'pdf,zip,docx',
   });
 
   const [file, setFile] = useState<File | null>(null);
@@ -96,6 +100,8 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
           is_free_preview: formData.is_free_preview,
           is_gradable: formData.is_gradable,
           max_score: formData.is_gradable ? Number(formData.max_score) : null,
+          assignment_duration_hours: formData.content_type === 'ASSIGNMENT' ? Number(formData.assignment_duration_hours) : null,
+          allowed_file_types: formData.content_type === 'ASSIGNMENT' ? formData.allowed_file_types : null,
         });
       }
 
@@ -119,9 +125,11 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
             {lesson?.id ? <Check size={20} className="text-indigo-500" /> : <Package size={20} className="text-indigo-500" />}
             {lesson?.id ? 'Editar Lección' : 'Nueva Lección'}
           </h3>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-white dark:bg-slate-700 rounded-full shadow-sm">
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-white dark:bg-slate-700 rounded-full shadow-sm">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -168,7 +176,7 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Tipo de Contenido
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, content_type: 'VIDEO' })}
@@ -191,10 +199,54 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
                     className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${formData.content_type === 'EXE_LEARNING' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-200 text-slate-500 dark:text-slate-400'}`}
                   >
                     <Package size={24} className="mb-2" />
-                    <span className="text-xs font-semibold">eXeLearning</span>
+                    <span className="text-xs font-semibold text-center leading-tight">eXeLearning</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, content_type: 'ASSIGNMENT' })}
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${formData.content_type === 'ASSIGNMENT' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-200 text-slate-500 dark:text-slate-400'}`}
+                  >
+                    <ClipboardList size={24} className="mb-2" />
+                    <span className="text-xs font-semibold text-center leading-tight">Tarea</span>
                   </button>
                 </div>
               </div>
+
+              {/* Assignment specific fields */}
+              {formData.content_type === 'ASSIGNMENT' && (
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Límite de tiempo (Horas)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={formData.assignment_duration_hours}
+                      onChange={(e) => setFormData({ ...formData, assignment_duration_hours: parseInt(e.target.value) || 24 })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      Tiempo que tendrá el alumno para entregar la tarea tras iniciarla.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Extensiones permitidas
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.allowed_file_types}
+                      onChange={(e) => setFormData({ ...formData, allowed_file_types: e.target.value })}
+                      placeholder="Ej. pdf,zip,docx"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      Separadas por coma. Dejar vacío para permitir cualquier archivo.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-6">
@@ -214,7 +266,7 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
                     ref={fileInputRef} 
                     className="hidden" 
                     onChange={handleFileChange}
-                    accept={formData.content_type === 'VIDEO' ? 'video/mp4,video/webm' : formData.content_type === 'DOCUMENT' ? '.pdf,.png,.jpg,.jpeg' : '.elp,.elpx,.zip'}
+                    accept={formData.content_type === 'VIDEO' ? 'video/mp4,video/webm' : formData.content_type === 'DOCUMENT' ? '.pdf,.png,.jpg,.jpeg' : formData.content_type === 'ASSIGNMENT' ? '.pdf,.zip,.docx' : '.elp,.elpx,.zip'}
                   />
                   {file ? (
                     <div className="flex flex-col items-center">

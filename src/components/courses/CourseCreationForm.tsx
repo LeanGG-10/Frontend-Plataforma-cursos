@@ -14,7 +14,8 @@ interface Props {
   categories: Category[];
 }
 
-interface CourseFormData extends CreateCoursePayload {
+interface CourseFormData extends Omit<CreateCoursePayload, 'status'> {
+  status: 'DRAFT' | 'PUBLISHED' | 'PENDING_REVIEW' | 'REJECTED';
   language: string;
   learning_objectives: string[];
   requirements: string[];
@@ -40,6 +41,55 @@ export default function CourseCreationForm({ courseId, categories }: Props) {
   const [activeTab, setActiveTab] = useState<'INFO' | 'STRUCTURE'>('INFO');
 
   const [userRole, setUserRole] = useState<string>('');
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [submittedAt, setSubmittedAt] = useState<string | null>(null);
+  const [showReviewConfirm, setShowReviewConfirm] = useState(false);
+
+  const handleCancelReview = async () => {
+    if (!courseId) return;
+    try {
+      setIsSubmitting(true);
+      const token = localStorage.getItem('accessToken') || '';
+      await coursesService.cancelReview(courseId, token);
+      setFormData(prev => ({ ...prev, status: 'DRAFT' }));
+      setSuccessModal({
+        visible: true,
+        message: 'La revisión del curso ha sido cancelada exitosamente y el curso ha vuelto a estado de borrador.'
+      });
+    } catch (err: any) {
+      console.error(err);
+      if (err.status === 400) {
+        alert("El tiempo límite de 1 hora para cancelar la revisión ha expirado");
+      } else {
+        alert(err.message || "Error al cancelar la revisión");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmSubmitReview = async () => {
+    if (!courseId) return;
+    setShowReviewConfirm(false);
+    setIsSubmitting(true);
+    setSubmitStatus({ visible: true, status: 'LOADING', message: 'Enviando a revisión...', redirectUrl: '' });
+    try {
+      const token = localStorage.getItem('accessToken') || '';
+      await coursesService.submitReview(courseId, token);
+      setFormData(prev => ({ ...prev, status: 'PENDING_REVIEW' }));
+      setSubmitStatus({
+        visible: true,
+        status: 'SUCCESS',
+        message: 'Curso enviado a revisión con éxito!',
+        redirectUrl: `/cursos/${courseId}`
+      });
+    } catch (err: any) {
+      setSubmitStatus(prev => ({ ...prev, visible: false }));
+      alert(err.message || 'Error al enviar a revisión');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     const user = authService.getUser();
@@ -70,6 +120,8 @@ export default function CourseCreationForm({ courseId, categories }: Props) {
             learning_objectives: data.course?.learning_objectives?.length ? data.course.learning_objectives : [''],
             requirements: data.course?.requirements?.length ? data.course.requirements : [''],
           }));
+          setRejectionReason(data.course?.rejection_reason || null);
+          setSubmittedAt(data.course?.submitted_at || null);
         })
         .catch(err => {
           console.error(err);
@@ -219,18 +271,28 @@ export default function CourseCreationForm({ courseId, categories }: Props) {
       const filteredObjectives = formData.learning_objectives.filter(o => o.trim() !== '');
       const filteredRequirements = formData.requirements.filter(o => o.trim() !== '');
 
-      const payload = {
-        ...formData,
+      const basePayload = {
+        title: formData.title,
+        description: formData.description,
+        courseCategoryId: formData.courseCategoryId || undefined,
         price: Number(formData.price) || 0,
-        duration: Number(formData.duration) || 0,
         status: action,
+        coverImage: formData.coverImage,
+        instructor: formData.instructor,
+        duration: Number(formData.duration) || 0,
+        level: formData.level,
+        totalLessons: Number(formData.totalLessons) || 0,
         overrideDuplicateWarning: overrideDuplicate,
-        learning_objectives: filteredObjectives,
-        requirements: filteredRequirements,
       };
 
       if (courseId) {
-        await coursesService.updateCourse(courseId, payload);
+        const updatePayload = {
+          ...basePayload,
+          language: formData.language,
+          learning_objectives: filteredObjectives,
+          requirements: filteredRequirements,
+        };
+        await coursesService.updateCourse(courseId, updatePayload);
         setSubmitStatus({
           visible: true,
           status: 'SUCCESS',
@@ -238,7 +300,7 @@ export default function CourseCreationForm({ courseId, categories }: Props) {
           redirectUrl: `/cursos/${courseId}`
         });
       } else {
-        await coursesService.createCourse(payload);
+        await coursesService.createCourse(basePayload as any);
         const successMessage = userRole === 'PROFESOR'
           ? 'Tu curso se guardará como borrador. Un administrador deberá revisarlo y publicarlo.'
           : `Curso ${action === 'PUBLISHED' ? 'publicado' : 'guardado'} con éxito!`;
@@ -288,6 +350,37 @@ export default function CourseCreationForm({ courseId, categories }: Props) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 md:p-8 font-sans">
       
+      {formData.status === 'REJECTED' && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 rounded-xl flex items-start gap-3 border border-red-200 dark:border-red-900/50">
+          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
+          <div>
+            <p className="text-sm font-semibold">Este curso fue rechazado por el Administrador.</p>
+            {rejectionReason && <p className="text-xs mt-1">Motivo: {rejectionReason}</p>}
+          </div>
+        </div>
+      )}
+
+      {formData.status === 'PENDING_REVIEW' && (
+        <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 rounded-xl flex items-start justify-between gap-3 border border-amber-200 dark:border-amber-900/50">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-500" />
+            <div>
+              <p className="text-sm font-semibold">Curso enviado a revisión</p>
+              <p className="text-xs mt-1">El curso está siendo revisado por un administrador y no se puede modificar.</p>
+            </div>
+          </div>
+          {userRole === 'PROFESOR' && (
+            <button
+              type="button"
+              onClick={handleCancelReview}
+              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors shrink-0"
+            >
+              Cancelar Revisión
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex border-b border-slate-200 dark:border-slate-800 mb-6 overflow-x-auto">
         <button 
@@ -306,6 +399,7 @@ export default function CourseCreationForm({ courseId, categories }: Props) {
 
       <div className={activeTab === 'INFO' ? 'block' : 'hidden'}>
         <form className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <fieldset disabled={formData.status === 'PENDING_REVIEW'} className="lg:col-span-3 grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Columna Principal - Datos Generales */}
         <div className="lg:col-span-2 space-y-6">
@@ -603,41 +697,55 @@ export default function CourseCreationForm({ courseId, categories }: Props) {
             {errors.duration && <span className="text-xs text-red-500">{errors.duration}</span>}
           </div>
         </div>
-      </form>
+          </fieldset>
+        </form>
 
-      <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col-reverse sm:flex-row justify-end gap-4 items-center">
-        {/* CA-21: Loading state buttons */}
-        <button
-          type="button"
-          disabled={isSubmitting || uploadingImage}
-          onClick={(e) => onActionClick(e, 'DRAFT')}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-medium text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting && submitAction === 'DRAFT' ? (
-            <><Loader2 size={18} className="animate-spin" /> Guardando...</>
-          ) : (
-            <><Save size={18} /> Guardar como borrador</>
-          )}
-        </button>
-        
-        {userRole !== 'PROFESOR' && (
-        <button
-          type="button"
-          disabled={isSubmitting || uploadingImage}
-          onClick={(e) => {
-            setSubmitAction('PUBLISHED');
-            onActionClick(e, 'PUBLISHED');
-          }}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm shadow-indigo-200 dark:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting && submitAction === 'PUBLISHED' ? (
-            <><Loader2 size={18} className="animate-spin" /> Publicando...</>
-          ) : (
-            <><Send size={18} /> Publicar</>
-          )}
-        </button>
+        {formData.status !== 'PENDING_REVIEW' && (
+          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col-reverse sm:flex-row justify-end gap-4 items-center">
+            {/* CA-21: Loading state buttons */}
+            <button
+              type="button"
+              disabled={isSubmitting || uploadingImage}
+              onClick={(e) => onActionClick(e, 'DRAFT')}
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-medium text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting && submitAction === 'DRAFT' ? (
+                <><Loader2 size={18} className="animate-spin" /> Guardando...</>
+              ) : (
+                <><Save size={18} /> Guardar como borrador</>
+              )}
+            </button>
+            
+            {userRole === 'PROFESOR' && courseId && (formData.status === 'DRAFT' || formData.status === 'REJECTED') && (
+              <button
+                type="button"
+                disabled={isSubmitting || uploadingImage}
+                onClick={() => setShowReviewConfirm(true)}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm shadow-indigo-200 dark:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Send size={18} /> Enviar a revisión
+              </button>
+            )}
+
+            {userRole !== 'PROFESOR' && (
+              <button
+                type="button"
+                disabled={isSubmitting || uploadingImage}
+                onClick={(e) => {
+                  setSubmitAction('PUBLISHED');
+                  onActionClick(e, 'PUBLISHED');
+                }}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm shadow-indigo-200 dark:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting && submitAction === 'PUBLISHED' ? (
+                  <><Loader2 size={18} className="animate-spin" /> Publicando...</>
+                ) : (
+                  <><Send size={18} /> Publicar</>
+                )}
+              </button>
+            )}
+          </div>
         )}
-      </div>
       </div>
 
       {activeTab === 'STRUCTURE' && (
@@ -819,6 +927,39 @@ export default function CourseCreationForm({ courseId, categories }: Props) {
                 className="px-4 py-2 rounded-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
               >
                 Continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Review Confirmation Modal */}
+      {showReviewConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center mb-4">
+                <Send size={24} />
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Enviar a revisión</h3>
+              <p className="text-slate-600 dark:text-slate-300 text-sm">
+                Atención: El curso será enviado a revisión. Solo tendrás 1 hora para cancelar esta solicitud si deseas hacer ajustes. ¿Confirmar envío?
+              </p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-900/50 px-6 py-4 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setShowReviewConfirm(false)}
+                className="px-4 py-2 rounded-lg font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSubmitReview}
+                className="px-4 py-2 rounded-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+              >
+                Confirmar envío
               </button>
             </div>
           </div>

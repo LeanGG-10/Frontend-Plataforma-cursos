@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Plus, Edit2, Trash2, ArrowUp, ArrowDown, BookOpen, AlertCircle, CheckCircle2, ChevronRight, ChevronDown } from 'lucide-react';
+import { Loader2, Plus, Edit2, Trash2, ArrowUp, ArrowDown, BookOpen, AlertCircle, CheckCircle2, ChevronRight, ChevronDown, Users, ClipboardList } from 'lucide-react';
 import { coursesService } from '../../services/courses.service';
 import LessonEditorModal from './LessonEditorModal';
+import AssignmentGradingModal from './AssignmentGradingModal';
 
 interface Lesson {
   id: string;
   title: string;
   position: number;
   duration_seconds: number | null;
+  content_type?: string;
 }
 
 interface Section {
@@ -30,6 +32,7 @@ export default function CourseStructureEditor({ courseId }: Props) {
   const [editingItem, setEditingItem] = useState<{ type: 'SECTION', id?: string, title: string } | null>(null);
   const [editingLessonContext, setEditingLessonContext] = useState<{ sectionId: string, lesson?: any } | null>(null);
   const [deleteContext, setDeleteContext] = useState<{ type: 'SECTION' | 'LESSON', id: string, parentId?: string } | null>(null);
+  const [gradingContext, setGradingContext] = useState<{ sectionId: string, lessonId: string, lessonTitle: string } | null>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -288,6 +291,12 @@ export default function CourseStructureEditor({ courseId }: Props) {
                             {lIdx + 1}
                           </div>
                           <span className="text-slate-700 dark:text-slate-300 font-medium">{lesson.title}</span>
+                          {lesson.content_type === 'ASSIGNMENT' && (
+                            <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                              <ClipboardList size={10} />
+                              Tarea
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover/lesson:opacity-100 transition-opacity">
@@ -307,6 +316,16 @@ export default function CourseStructureEditor({ courseId }: Props) {
                               <ArrowDown size={14} />
                             </button>
                           </div>
+                          
+                          {lesson.content_type === 'ASSIGNMENT' && (
+                            <button
+                              onClick={() => setGradingContext({ sectionId: section.id, lessonId: lesson.id, lessonTitle: lesson.title })}
+                              className="p-1.5 mr-1 text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 rounded-lg transition-colors flex items-center gap-1.5"
+                              title="Ver Entregas"
+                            >
+                              <Users size={16} />
+                            </button>
+                          )}
                           
                           <button 
                             onClick={() => setEditingLessonContext({ sectionId: section.id, lesson })}
@@ -431,6 +450,16 @@ export default function CourseStructureEditor({ courseId }: Props) {
             setEditingLessonContext(null);
             await fetchStructure();
           }}
+        />
+      )}
+
+      {/* Grading Modal */}
+      {gradingContext && (
+        <AssignmentGradingModal
+          sectionId={gradingContext.sectionId}
+          lessonId={gradingContext.lessonId}
+          lessonTitle={gradingContext.lessonTitle}
+          onClose={() => setGradingContext(null)}
         />
       )}
 

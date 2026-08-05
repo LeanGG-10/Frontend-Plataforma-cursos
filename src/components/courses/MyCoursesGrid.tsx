@@ -103,12 +103,13 @@ export const MyCoursesGrid: React.FC = () => {
               <Users size={14} />
               {course.enrolledCount} {course.enrolledCount === 1 ? 'estudiante inscrito' : 'estudiantes inscritos'}
             </div>
-            <button 
+            <a 
+              href={`/cursos/crear?id=${course.id}`}
               className="p-2 rounded-full bg-secondary/10 text-secondary hover:bg-secondary hover:text-white transition-colors cursor-pointer"
-              title="Editar curso (Próximamente)"
+              title="Editar curso"
             >
               <Edit2 size={16} />
-            </button>
+            </a>
           </div>
         </div>
       ))}

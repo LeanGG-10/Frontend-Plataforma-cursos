@@ -4,6 +4,7 @@ import Navbar from '../../components/ui/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import { formatPrice } from '../../utils/format';
 import CourseCTA from '../../components/courses/CourseCTA';
+import AdminActionBar from '../../components/courses/AdminActionBar';
 
 const { id } = Astro.params;
 const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
@@ -267,6 +268,8 @@ function formatDuration(minutes: number) {
       </div>
     </div>
   </main>
+
+  <AdminActionBar client:load courseId={course.id} currentStatus={course.status} />
 
   <Footer />
 </Layout>
