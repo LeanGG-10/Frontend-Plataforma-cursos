@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { coursesService } from '../../services/courses.service';
 import { authService } from '../../services/auth.service';
-import { Loader2, PlayCircle, FileText, ClipboardList, BookOpen, AlertCircle, ChevronLeft, Menu, X } from 'lucide-react';
+import { Loader2, PlayCircle, FileText, ClipboardList, BookOpen, AlertCircle, ChevronLeft, Menu, X, Trophy } from 'lucide-react';
 import StudentAssignmentView from './StudentAssignmentView';
+import StudentQuizView from './StudentQuizView';
 
 interface Lesson {
   id: string;
@@ -11,6 +12,9 @@ interface Lesson {
   is_published: boolean;
   position: number;
   description?: string;
+  is_final_exam?: boolean;
+  quiz_time_limit_minutes?: number;
+  passing_score_percentage?: number;
 }
 
 interface Section {
@@ -107,6 +111,7 @@ export default function CourseLMSViewer({ courseId }: { courseId: string }) {
       case 'VIDEO': return <PlayCircle size={16} />;
       case 'DOCUMENT': return <FileText size={16} />;
       case 'ASSIGNMENT': return <ClipboardList size={16} />;
+      case 'QUIZ': return <Trophy size={16} />;
       case 'EXE_LEARNING': return <BookOpen size={16} />;
       default: return <FileText size={16} />;
     }
@@ -215,6 +220,15 @@ export default function CourseLMSViewer({ courseId }: { courseId: string }) {
             {activeLesson ? (
               activeLesson.lesson.content_type === 'ASSIGNMENT' ? (
                 <StudentAssignmentView sectionId={activeLesson.sectionId} lessonId={activeLesson.lesson.id} title={activeLesson.lesson.title} />
+              ) : activeLesson.lesson.content_type === 'QUIZ' ? (
+                <StudentQuizView 
+                  sectionId={activeLesson.sectionId} 
+                  lessonId={activeLesson.lesson.id} 
+                  title={activeLesson.lesson.title}
+                  isFinalExam={activeLesson.lesson.is_final_exam}
+                  timeLimitMinutes={activeLesson.lesson.quiz_time_limit_minutes}
+                  passingScore={activeLesson.lesson.passing_score_percentage}
+                />
               ) : (
                 <div className="flex-1 flex flex-col gap-6 overflow-y-auto custom-scrollbar">
                   <div className="w-full shrink-0 min-h-[400px] aspect-video bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 flex flex-col relative shadow-2xl">

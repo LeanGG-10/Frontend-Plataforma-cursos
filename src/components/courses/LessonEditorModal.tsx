@@ -1,18 +1,22 @@
 import React, { useState, useRef } from 'react';
-import { Loader2, X, UploadCloud, FileText, Video, Package, Check, AlertCircle, ClipboardList, Users } from 'lucide-react';
+import { Loader2, X, UploadCloud, FileText, Video, Package, Check, AlertCircle, ClipboardList, BookOpenCheck } from 'lucide-react';
 import { coursesService } from '../../services/courses.service';
+import QuizQuestionBuilderModal from './QuizQuestionBuilderModal';
 
 interface Lesson {
   id?: string;
   title: string;
   description?: string;
-  content_type?: 'VIDEO' | 'DOCUMENT' | 'EXE_LEARNING' | 'ASSIGNMENT';
+  content_type?: 'VIDEO' | 'DOCUMENT' | 'EXE_LEARNING' | 'ASSIGNMENT' | 'QUIZ';
   is_published?: boolean;
   is_free_preview?: boolean;
   is_gradable?: boolean;
   max_score?: number;
   assignment_duration_hours?: number;
   allowed_file_types?: string;
+  quiz_time_limit_minutes?: number;
+  passing_score_percentage?: number;
+  is_final_exam?: boolean;
 }
 
 interface Props {
@@ -34,12 +38,16 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
     max_score: lesson?.max_score ?? 10.0,
     assignment_duration_hours: lesson?.assignment_duration_hours ?? 24,
     allowed_file_types: lesson?.allowed_file_types ?? 'pdf,zip,docx',
+    quiz_time_limit_minutes: lesson?.quiz_time_limit_minutes ?? 15,
+    passing_score_percentage: lesson?.passing_score_percentage ?? 70.0,
+    is_final_exam: lesson?.is_final_exam ?? false,
   });
 
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState('');
+  const [showQuizBuilder, setShowQuizBuilder] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -102,6 +110,9 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
           max_score: formData.is_gradable ? Number(formData.max_score) : null,
           assignment_duration_hours: formData.content_type === 'ASSIGNMENT' ? Number(formData.assignment_duration_hours) : null,
           allowed_file_types: formData.content_type === 'ASSIGNMENT' ? formData.allowed_file_types : null,
+          quiz_time_limit_minutes: formData.content_type === 'QUIZ' ? Number(formData.quiz_time_limit_minutes) : null,
+          passing_score_percentage: formData.content_type === 'QUIZ' ? Number(formData.passing_score_percentage) : null,
+          is_final_exam: formData.content_type === 'QUIZ' ? formData.is_final_exam : false,
         });
       }
 
@@ -176,7 +187,7 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Tipo de Contenido
                 </label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-5 gap-2">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, content_type: 'VIDEO' })}
@@ -208,6 +219,14 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
                   >
                     <ClipboardList size={24} className="mb-2" />
                     <span className="text-xs font-semibold text-center leading-tight">Tarea</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, content_type: 'QUIZ' })}
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${formData.content_type === 'QUIZ' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-200 text-slate-500 dark:text-slate-400'}`}
+                  >
+                    <BookOpenCheck size={24} className="mb-2" />
+                    <span className="text-xs font-semibold text-center leading-tight">Quiz</span>
                   </button>
                 </div>
               </div>
@@ -245,6 +264,69 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
                       Separadas por coma. Dejar vacío para permitir cualquier archivo.
                     </p>
                   </div>
+                </div>
+              )}
+
+              {/* Quiz specific fields */}
+              {formData.content_type === 'QUIZ' && (
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Límite de tiempo (Minutos)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.quiz_time_limit_minutes}
+                        onChange={(e) => setFormData({ ...formData, quiz_time_limit_minutes: parseInt(e.target.value) || 15 })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        % Aprobación
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={formData.passing_score_percentage}
+                        onChange={(e) => setFormData({ ...formData, passing_score_percentage: parseFloat(e.target.value) || 70.0 })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <div>
+                      <h4 className="text-sm font-medium text-slate-900 dark:text-white">¿Es el Examen Final?</h4>
+                      <p className="text-xs text-slate-500">Marcar si esta evaluación define la aprobación del curso.</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" className="sr-only peer" checked={formData.is_final_exam} onChange={(e) => setFormData({...formData, is_final_exam: e.target.checked})} />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                  </div>
+
+                  {lesson?.id && lesson.content_type === 'QUIZ' ? (
+                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                      <button
+                        type="button"
+                        onClick={() => setShowQuizBuilder(true)}
+                        className="w-full py-2.5 px-4 bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 border border-indigo-200 dark:border-indigo-800/50"
+                      >
+                        <BookOpenCheck size={18} />
+                        Gestionar Preguntas del Quiz
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium text-center bg-amber-50 dark:bg-amber-900/20 p-2 rounded-lg border border-amber-200 dark:border-amber-800/50">
+                        Guarda la lección como "Quiz" primero para poder gestionar las preguntas.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -388,6 +470,14 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
           </button>
         </div>
       </div>
+      
+      {showQuizBuilder && lesson?.id && (
+        <QuizQuestionBuilderModal
+          sectionId={sectionId}
+          lessonId={lesson.id}
+          onClose={() => setShowQuizBuilder(false)}
+        />
+      )}
     </div>
   );
 }

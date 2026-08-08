@@ -1,5 +1,19 @@
 const API_URL = import.meta.env.PUBLIC_API_URL;
 
+export interface QuizOption {
+  id?: string;
+  option_text: string;
+  is_correct?: boolean;
+}
+
+export interface QuizQuestion {
+  id?: string;
+  question_text: string;
+  explanation?: string;
+  position?: number;
+  options: QuizOption[];
+}
+
 export interface CreateCoursePayload {
   title: string;
   description: string;
@@ -355,6 +369,85 @@ class CoursesService {
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.message || 'Error al calificar la tarea');
+    }
+    return response.json();
+  }
+
+  // ==========================================
+  // QUIZ Y EXÁMENES
+  // ==========================================
+
+  async getQuizQuestions(sectionId: string, lessonId: string): Promise<QuizQuestion[]> {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/quiz/questions`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al obtener las preguntas del quiz');
+    }
+    return response.json();
+  }
+
+  async createQuizQuestion(sectionId: string, lessonId: string, payload: QuizQuestion): Promise<QuizQuestion> {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/quiz/questions`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al crear la pregunta');
+    }
+    return response.json();
+  }
+
+  async updateQuizQuestion(sectionId: string, lessonId: string, questionId: string, payload: QuizQuestion): Promise<QuizQuestion> {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/quiz/questions/${questionId}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al actualizar la pregunta');
+    }
+    return response.json();
+  }
+
+  async deleteQuizQuestion(sectionId: string, lessonId: string, questionId: string) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/quiz/questions/${questionId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al eliminar la pregunta');
+    }
+    return response.json();
+  }
+
+  async submitQuizAttempt(sectionId: string, lessonId: string, answers: Record<string, string>) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/quiz/submit`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ answers }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al enviar el quiz');
+    }
+    return response.json();
+  }
+
+  async getQuizAttempts(sectionId: string, lessonId: string) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/quiz/attempts`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al obtener los intentos del quiz');
     }
     return response.json();
   }
