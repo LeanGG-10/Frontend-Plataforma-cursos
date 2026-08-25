@@ -76,7 +76,7 @@ export default function ResetPasswordForm() {
     <div className="w-full auth-view animate-fade-in">
       <div className="mb-10">
         <h2 className="text-3xl font-display text-primary mb-2">Crear nueva contraseña</h2>
-        <p className="text-primary/50 text-sm font-body">Ingresa tu nueva contraseña para acceder a tu cuenta.</p>
+        <p className="text-primary/90 font-semibold text-sm font-body">Ingresa tu nueva contraseña para acceder a tu cuenta.</p>
       </div>
 
       {status === 'error' && (
@@ -93,7 +93,7 @@ export default function ResetPasswordForm() {
 
       <form onSubmit={handleSubmit} className="space-y-8" noValidate>
         <div className="group relative">
-          <label htmlFor="reset-password" className="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Nueva Contraseña</label>
+          <label htmlFor="reset-password" className="block text-[10px] font-bold uppercase tracking-widest text-primary/90 font-semibold group-focus-within:text-secondary transition-colors">Nueva Contraseña</label>
           <div className="relative">
             <input 
               type={showPassword ? 'text' : 'password'} 
@@ -125,7 +125,7 @@ export default function ResetPasswordForm() {
         </div>
 
         <div className="group relative">
-          <label htmlFor="reset-confirm" className="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Confirmar Contraseña</label>
+          <label htmlFor="reset-confirm" className="block text-[10px] font-bold uppercase tracking-widest text-primary/90 font-semibold group-focus-within:text-secondary transition-colors">Confirmar Contraseña</label>
           <input 
             type={showPassword ? 'text' : 'password'} 
             id="reset-confirm" 

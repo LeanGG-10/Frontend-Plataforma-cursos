@@ -16,6 +16,7 @@ interface Course {
   coverImage: string;
   categoryName: string;
   type: 'BOOK' | 'COURSE';
+  status?: string;
   course?: {
     instructor: string;
     level: 'PRINCIPIANTE' | 'INTERMEDIO' | 'AVANZADO' | string;
@@ -33,7 +34,7 @@ const CourseCard: React.FC<{
   return (
     <div 
       className={`group cursor-pointer p-6 rounded-[12px] transition-all duration-500 border border-[#C9A44A]/5 bg-[#F7F2E8] text-[#0F172A] shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] hover:scale-105 flex flex-col h-full relative overflow-hidden`}
-      onClick={() => window.location.href = `/courses/${course.id}`}
+      onClick={() => window.location.href = `/cursos/${course.id}`}
     >
       <div className="aspect-video mb-6 overflow-hidden relative rounded-[8px] bg-white/10">
         {course.coverImage ? (
@@ -140,6 +141,8 @@ export const CourseGrid: React.FC = () => {
   const [pendingDeactivateId, setPendingDeactivateId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('Todas');
   const [categories, setCategories] = useState<CourseCategory[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Category Management State
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -189,7 +192,7 @@ export const CourseGrid: React.FC = () => {
       if (pillsContainer) {
         pillsContainer.innerHTML = data.map(cat => `
           <button 
-            class="category-pill px-4 py-2 rounded-full border border-secondary/10 text-[11px] font-bold uppercase tracking-wider text-primary/60 hover:bg-secondary hover:text-primary transition-all cursor-pointer"
+            class="category-pill px-4 py-2 rounded-full border border-secondary/10 text-[11px] font-bold uppercase tracking-wider text-primary/90 font-semibold hover:bg-secondary hover:text-primary transition-all cursor-pointer"
             data-category="${cat.name}"
           >
             ${cat.name}
@@ -205,16 +208,23 @@ export const CourseGrid: React.FC = () => {
         });
       }
     } catch (err) {
-      console.error('Error fetching categories:', err);
+      void 0; /* error log removed */ // ('Error fetching categories:', err);
     }
   };
 
-  const fetchCourses = async () => {
+  const fetchCourses = async (pageNum: number = 1, append: boolean = false) => {
     try {
-      const data = editing 
-        ? await coursesService.getAllCoursesForAdmin() 
-        : await coursesService.getAllCourses();
-      setCourses(data);
+      const response = editing 
+        ? await coursesService.getAllCoursesForAdmin(pageNum) 
+        : await coursesService.getAllCourses(pageNum);
+      
+      if (append) {
+        setCourses(prev => [...prev, ...response.data]);
+      } else {
+        setCourses(response.data);
+      }
+      setTotalPages(response.totalPages || 1);
+      setPage(response.page || 1);
     } catch (err: any) {
       setError(err.message || 'Error al cargar los cursos');
     } finally {
@@ -223,7 +233,7 @@ export const CourseGrid: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchCourses();
+    fetchCourses(1, false);
   }, [editing]);
 
   useEffect(() => {
@@ -251,18 +261,21 @@ export const CourseGrid: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const countEl = document.getElementById('count');
-    if (countEl) countEl.textContent = courses.length.toString();
-  }, [courses]);
-
   const filteredCourses = courses.filter(course => {
+    // Only show published courses in the courses catalog
+    if (course.status !== 'PUBLISHED') return false;
+
     if (categoryFilter === 'Todas') return true;
     const courseCategory = typeof course.categoryName === 'string' 
       ? course.categoryName 
       : 'Curso';
     return courseCategory === categoryFilter;
   });
+
+  useEffect(() => {
+    const countEl = document.getElementById('count');
+    if (countEl) countEl.textContent = filteredCourses.length.toString();
+  }, [filteredCourses]);
 
   const resetForm = () => {
     setFormData({
@@ -350,7 +363,7 @@ export const CourseGrid: React.FC = () => {
         price: Number(formData.price),
         duration: Number(formData.duration),
         courseCategoryId: formData.courseCategoryId || (categories.length > 0 ? categories[0].id : undefined),
-        instructor: currentUser?.name || 'Instructor Genérico',
+        instructor: currentUser?.full_name || 'Instructor Genérico',
         level: formData.level,
         status: 'PUBLISHED', // Direct to published
         totalLessons: 1, // Default value
@@ -374,7 +387,7 @@ export const CourseGrid: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="py-32 text-center text-primary/60 font-body">
+      <div className="py-32 text-center text-primary/90 font-semibold font-body">
         Cargando cursos...
       </div>
     );
@@ -406,7 +419,7 @@ export const CourseGrid: React.FC = () => {
               </div>
               <div className="text-center">
                 <span className="block text-lg font-display font-bold text-primary italic">Añadir Curso</span>
-                <span className="text-xs font-body text-primary/40 uppercase tracking-widest mt-1">Nuevo programa</span>
+                <span className="text-xs font-body text-primary/90 font-semibold uppercase tracking-widest mt-1">Nuevo programa</span>
               </div>
             </button>
 
@@ -415,7 +428,7 @@ export const CourseGrid: React.FC = () => {
               className="group border border-secondary/20 rounded-[12px] py-4 flex items-center justify-center gap-3 bg-white hover:bg-secondary/5 transition-all duration-300 cursor-pointer"
             >
               <Settings size={18} className="text-secondary group-hover:rotate-90 transition-transform duration-500" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/60 group-hover:text-primary">Gestionar Categorías</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/90 font-semibold group-hover:text-primary">Gestionar Categorías</span>
             </button>
           </div>
         )}
@@ -436,9 +449,20 @@ export const CourseGrid: React.FC = () => {
         <div className="py-32 text-center animate-in fade-in duration-500">
           <div className="max-w-md mx-auto">
             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#C9A44A" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-6 opacity-20"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-            <h3 className="text-2xl font-display text-primary/60 italic mb-2">No hay cursos disponibles</h3>
-            <p className="text-primary/40 font-body text-sm">Vuelve pronto para descubrir nuevos cursos o prueba con otra categoría.</p>
+            <h3 className="text-2xl font-display text-primary/90 font-semibold italic mb-2">No hay cursos disponibles</h3>
+            <p className="text-primary/90 font-semibold font-body text-sm">Vuelve pronto para descubrir nuevos cursos o prueba con otra categoría.</p>
           </div>
+        </div>
+      )}
+
+      {!error && page < totalPages && (
+        <div className="mt-12 flex justify-center animate-in fade-in duration-500">
+          <button 
+            onClick={() => fetchCourses(page + 1, true)}
+            className="px-8 py-3 bg-secondary text-primary font-bold text-xs uppercase tracking-widest rounded-[12px] hover:bg-white hover:text-primary transition-all cursor-pointer shadow-lg"
+          >
+            Cargar más
+          </button>
         </div>
       )}
 
@@ -454,7 +478,7 @@ export const CourseGrid: React.FC = () => {
       >
         <form onSubmit={handleAddSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Título del Curso</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Título del Curso</label>
             <input 
               type="text" 
               required
@@ -468,7 +492,7 @@ export const CourseGrid: React.FC = () => {
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Categoría</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Categoría</label>
               <select 
                 required
                 disabled={submitLoading || categories.length === 0}
@@ -483,7 +507,7 @@ export const CourseGrid: React.FC = () => {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Precio ($)</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Precio ($)</label>
               <input 
                 type="number" 
                 step="0.01"
@@ -499,7 +523,7 @@ export const CourseGrid: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Duración (horas)</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Duración (horas)</label>
               <input 
                 type="number" 
                 required
@@ -511,7 +535,7 @@ export const CourseGrid: React.FC = () => {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Nivel</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Nivel</label>
               <select
                 required
                 disabled={submitLoading}
@@ -527,17 +551,17 @@ export const CourseGrid: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Instructor</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Instructor</label>
             <input 
               type="text" 
               readOnly
-              className="w-full bg-tertiary/80 border border-secondary/10 rounded-[10px] px-4 py-3 text-primary/60 cursor-not-allowed"
-              value={currentUser?.name || 'Instructor Genérico'}
+              className="w-full bg-tertiary/80 border border-secondary/10 rounded-[10px] px-4 py-3 text-primary/90 font-semibold cursor-not-allowed"
+              value={currentUser?.full_name || 'Instructor Genérico'}
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Descripción del Curso</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Descripción del Curso</label>
             <textarea 
               required
               disabled={submitLoading}
@@ -550,7 +574,7 @@ export const CourseGrid: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Portada (Opcional)</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Portada (Opcional)</label>
             <div className="relative group">
               <input 
                 type="file" 
@@ -572,7 +596,7 @@ export const CourseGrid: React.FC = () => {
                     <span className="text-[10px] mt-1 font-bold truncate max-w-[200px]">{coverFile.name}</span>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center text-primary/40 group-hover:text-secondary transition-colors">
+                  <div className="flex flex-col items-center text-primary/90 font-semibold group-hover:text-secondary transition-colors">
                     <Upload size={24} />
                     <span className="text-[10px] mt-1 font-bold">Subir Imagen de Portada</span>
                   </div>
@@ -583,7 +607,7 @@ export const CourseGrid: React.FC = () => {
 
           {submitLoading && (
             <div className="space-y-2 pt-2 animate-in fade-in duration-300">
-              <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-primary/40">
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-primary/90 font-semibold">
                 <span>Creando curso...</span>
                 <span>{uploadProgress}%</span>
               </div>
@@ -601,7 +625,7 @@ export const CourseGrid: React.FC = () => {
               type="button"
               onClick={resetForm}
               disabled={submitLoading}
-              className="flex-1 text-primary/50 font-bold text-[10px] uppercase tracking-widest py-4 rounded-[12px] border border-secondary/10 hover:bg-tertiary/50 hover:text-primary transition-all cursor-pointer disabled:opacity-50"
+              className="flex-1 text-primary/90 font-bold text-[10px] uppercase tracking-widest py-4 rounded-[12px] border border-secondary/10 hover:bg-tertiary/50 hover:text-primary transition-all cursor-pointer disabled:opacity-50"
             >
               Limpiar
             </button>
@@ -678,13 +702,13 @@ export const CourseGrid: React.FC = () => {
                           setEditingCatId(cat.id);
                           setEditingCatName(cat.name);
                         }}
-                        className="p-1.5 text-primary/40 hover:text-secondary transition-colors"
+                        className="p-1.5 text-primary/90 font-semibold hover:text-secondary transition-colors"
                       >
                         <Edit2 size={14} />
                       </button>
                       <button 
                         onClick={() => handleDeleteCategory(cat.id)}
-                        className="p-1.5 text-primary/40 hover:text-red-500 transition-colors cursor-pointer"
+                        className="p-1.5 text-primary/90 font-semibold hover:text-red-500 transition-colors cursor-pointer"
                       >
                         <Trash size={14} />
                       </button>
@@ -710,7 +734,7 @@ export const CourseGrid: React.FC = () => {
           <div className="flex gap-4">
             <button
               onClick={() => setPendingDeactivateId(null)}
-              className="flex-1 text-primary/50 font-bold text-[10px] uppercase tracking-widest py-3 rounded-[12px] border border-secondary/10 hover:bg-tertiary/50 hover:text-primary transition-all cursor-pointer"
+              className="flex-1 text-primary/90 font-bold text-[10px] uppercase tracking-widest py-3 rounded-[12px] border border-secondary/10 hover:bg-tertiary/50 hover:text-primary transition-all cursor-pointer"
             >
               Cancelar
             </button>

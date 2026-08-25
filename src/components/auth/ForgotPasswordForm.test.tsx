@@ -33,7 +33,7 @@ describe('ForgotPasswordForm', () => {
     expect(authService.recoverPassword).toHaveBeenCalledWith('test@elite.com');
     
     // Verifica mensaje genérico
-    expect(await screen.findByText(/si tu email está registrado, recibirás un enlace/i)).toBeInTheDocument();
+    expect(await screen.findByText(/si el correo está registrado, recibirás un enlace/i)).toBeInTheDocument();
   });
 
   // Gap 1 - CA 6 (Rate limiting HTTP 429)
@@ -50,7 +50,7 @@ describe('ForgotPasswordForm', () => {
     await user.click(submitBtn);
 
     // Verifica mensaje específico
-    expect(await screen.findByText(/demasiados intentos\. espera unos minutos/i)).toBeInTheDocument();
+    expect(await screen.findByText(/has alcanzado el límite de intentos/i)).toBeInTheDocument();
   });
 
   // CA 13 - Estado de Carga y Doble Submit

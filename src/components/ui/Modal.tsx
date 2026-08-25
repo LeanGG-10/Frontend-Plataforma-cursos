@@ -30,7 +30,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
           <button 
             onClick={onClose}
             title="Cancelar"
-            className="p-2 hover:bg-secondary/10 rounded-full transition-colors text-primary/40 hover:text-primary cursor-pointer"
+            className="p-2 hover:bg-secondary/10 rounded-full transition-colors text-primary/90 font-semibold hover:text-primary cursor-pointer"
           >
             <X size={20} />
           </button>

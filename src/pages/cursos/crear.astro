@@ -1,24 +1,20 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/ui/Navbar.astro';
 import CourseCreationForm from '../../components/courses/CourseCreationForm';
 
-
-
+const courseId = Astro.url.searchParams.get('id') || undefined;
 // Obtener categorías (llamada simulando servicio interno en SSR)
 const API_URL = import.meta.env.PUBLIC_API_URL;
 let initialCategories = [];
 try {
-  // Intentamos obtener categorías del backend asumiendo cookie auth
-  const token = Astro.cookies.get('accessToken')?.value;
-  const response = await fetch(`${API_URL}/course-categories`, {
-    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-  });
+  const response = await fetch(`${API_URL}/course-categories`);
   
   if (response.ok) {
     initialCategories = await response.json();
   }
 } catch (error) {
-  console.error("Error fetching categories in SSR:", error);
+  void 0; /* error log removed */ // ("Error fetching categories in SSR:", error);
 }
 
 // Fallback preventivo si el backend no respondió para asegurar el funcionamiento del React component
@@ -31,25 +27,28 @@ if (!initialCategories || initialCategories.length === 0) {
 }
 ---
 
-<Layout title="Crear Nuevo Curso | Élite Educativa">
-  <main class="min-h-screen bg-slate-50 dark:bg-slate-900/50 pt-[80px] pb-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<Layout title={courseId ? "Editar Curso | Élite Educativa" : "Crear Nuevo Curso | Élite Educativa"}>
+  <Navbar />
+  <main class="min-h-screen bg-[#F7F2E8] pt-[80px] pb-16">
+    <div class="max-w-[95%] mx-auto">
       
       {/* Header Area */}
       <div class="mb-8 mt-6">
         <div class="flex items-center gap-2 mb-2">
-          <a href="/courses" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium">← Volver a mis cursos</a>
+          <a id="back-link" href="/cursos" class="text-sm text-slate-500 hover:text-slate-700 hover:underline font-medium">← Volver a mis cursos</a>
         </div>
-        <h1 class="text-3xl sm:text-4xl font-display text-slate-900 dark:text-white mb-2">
-          Crear Nuevo Curso
+        <h1 class="text-3xl sm:text-4xl font-display text-primary mb-2">
+          {courseId ? "Editar Curso" : "Crear Nuevo Curso"}
         </h1>
-        <p class="text-slate-500 dark:text-slate-400 text-sm sm:text-base max-w-2xl">
-          Configura los detalles de tu nuevo curso. Puedes guardarlo como borrador y publicarlo más tarde cuando esté listo.
+        <p class="text-primary/90 font-semibold text-sm sm:text-base max-w-2xl">
+          {courseId 
+            ? "Actualiza los detalles de tu curso." 
+            : "Configura los detalles de tu nuevo curso. Puedes guardarlo como borrador y publicarlo más tarde cuando esté listo."}
         </p>
       </div>
       
       {/* Container del formulario React */}
-      <CourseCreationForm categories={initialCategories} client:load />
+      <CourseCreationForm courseId={courseId} categories={initialCategories} client:load />
 
     </div>
   </main>
@@ -63,5 +62,10 @@ if (!initialCategories || initialCategories.length === 0) {
   const user = authService.getUser();
   if (!user || (user.role !== 'PROFESOR' && user.role !== 'ADMIN')) {
     window.location.href = '/acceso-denegado';
+  } else {
+    const backLink = document.getElementById('back-link');
+    if (backLink && user.role === 'PROFESOR') {
+      backLink.setAttribute('href', '/mis-cursos');
+    }
   }
 </script>

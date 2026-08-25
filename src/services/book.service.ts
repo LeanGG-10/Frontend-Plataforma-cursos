@@ -45,7 +45,7 @@ class BookService {
         errorDetail = await response.text();
       }
 
-      console.error(`[BookService Error ${response.status}] ${errorMessage}:`, errorDetail);
+      void 0; /* error log removed */ // (`[BookService Error ${response.status}] ${errorMessage}:`, errorDetail);
       
       if (response.status === 500) {
         throw new Error('Servidor temporalmente fuera de servicio');
@@ -56,19 +56,29 @@ class BookService {
     return response.json();
   }
 
-  async getAllBooks(): Promise<Book[]> {
-    const response = await fetch(`${API_URL}/products`);
-    const data = await this.handleResponse<any[]>(response, 'Error al obtener los libros');
-    return data.map((b: any) => this.mapBook(b));
+  async getAllBooks(page: number = 1): Promise<{ data: Book[], total: number, page: number, totalPages: number }> {
+    const response = await fetch(`${API_URL}/products?page=${page}&limit=12`);
+    const result = await this.handleResponse<any>(response, 'Error al obtener los libros');
+    return {
+      data: result.data.map((b: any) => this.mapBook(b)),
+      total: result.total,
+      page: result.page,
+      totalPages: result.totalPages
+    };
   }
 
-  async getMyBooks(): Promise<Book[]> {
-    const response = await fetch(`${API_URL}/products/mine`, {
+  async getMyBooks(page: number = 1): Promise<{ data: Book[], total: number, page: number, totalPages: number }> {
+    const response = await fetch(`${API_URL}/products/mine?page=${page}&limit=12`, {
       method: 'GET',
       headers: this.getAuthHeaders(),
     });
-    const data = await this.handleResponse<any[]>(response, 'Error al obtener tus libros');
-    return data.map((b: any) => this.mapBook(b));
+    const result = await this.handleResponse<any>(response, 'Error al obtener tus libros');
+    return {
+      data: result.data.map((b: any) => this.mapBook(b)),
+      total: result.total,
+      page: result.page,
+      totalPages: result.totalPages
+    };
   }
 
   async createBook(formData: FormData): Promise<Book> {

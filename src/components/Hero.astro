@@ -1,6 +1,6 @@
 ---
 import { Image } from 'astro:assets';
-import logoPrimary from '../assets/logo-primary.png';
+import logoLight from '../assets/logo-light-transparent.png';
 import Button from './ui/Button.astro';
 ---
 
@@ -14,10 +14,10 @@ import Button from './ui/Button.astro';
   <div class="container mx-auto px-6 relative z-10 flex flex-col items-center text-center">
     <div class="mb-12 animate-fade-in">
       <Image 
-        src={logoPrimary} 
+        src={logoLight} 
         alt="Élite Educativa Branding" 
-        width={320} 
-        class="w-64 md:w-80 h-auto"
+        width={600} 
+        class="w-96 md:w-[480px] lg:w-[600px] h-auto max-w-full"
       />
     </div>
 
