@@ -7,7 +7,7 @@ import CourseCTA from '../../components/courses/CourseCTA';
 import AdminActionBar from '../../components/courses/AdminActionBar';
 
 const { id } = Astro.params;
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.PUBLIC_API_URL ;
 
 let course: any = null;
 
@@ -20,7 +20,7 @@ try {
 
   course = await response.json();
 } catch (error) {
-  console.error('[SSR Error] Failed to fetch course:', error);
+  void 0; /* error log removed */ // ('[SSR Error] Failed to fetch course:', error);
   return Astro.redirect('/404');
 }
 
@@ -34,7 +34,7 @@ const language = course.course?.language || course.metadata?.language || 'Españ
 const duration = course.course?.duration || course.duration || course.metadata?.duration || 0;
 const averageRating = course.course?.average_rating || course.metadata?.averageRating || 0;
 const totalReviews = course.course?.total_reviews || course.metadata?.totalReviews || 0;
-const sections = course.sections || [];
+const sections = course.modules ? course.modules.flatMap((m: any) => m.sections || []) : (course.sections || []);
 const instructorName = course.course?.instructor || course.instructor?.name || course.instructor || 'Instructor de Élite Educativa';
 
 function formatDuration(minutes: number) {
@@ -183,7 +183,7 @@ function formatDuration(minutes: number) {
             <section>
               <div class="flex items-end justify-between mb-6">
                 <h2 class="text-3xl font-display font-bold text-primary">Contenido del Curso</h2>
-                <div class="text-sm font-bold text-primary/50">
+                <div class="text-sm font-bold text-primary/90 font-semibold">
                   {sections.length} secciones • {sections.reduce((acc: number, sec: any) => acc + (sec.lessons?.length || 0), 0)} clases
                 </div>
               </div>
@@ -197,7 +197,7 @@ function formatDuration(minutes: number) {
                         <span class="text-primary text-lg">{section.title}</span>
                       </div>
                       <div class="flex items-center gap-4">
-                        <span class="text-xs text-primary/40 uppercase tracking-widest font-bold hidden md:block">
+                        <span class="text-xs text-primary/90 font-semibold uppercase tracking-widest font-bold hidden md:block">
                           {section.lessons?.length || 0} lecciones
                         </span>
                         <span class="transition group-open:rotate-180">
@@ -205,7 +205,7 @@ function formatDuration(minutes: number) {
                         </span>
                       </div>
                     </summary>
-                    <div class="bg-white/30 px-5 pb-5 pt-1 text-primary/70">
+                    <div class="bg-white/30 px-5 pb-5 pt-1 text-primary/90 font-semibold">
                       <ul class="space-y-2 mt-2">
                         {section.lessons && section.lessons.map((lesson: any) => (
                           <li class="flex items-center justify-between p-3 hover:bg-white/50 rounded-lg transition-colors border border-transparent hover:border-primary/5">
@@ -217,13 +217,13 @@ function formatDuration(minutes: number) {
                               )}
                               <span class="text-sm font-medium">{lesson.title}</span>
                             </div>
-                            <span class="text-xs text-primary/40 font-mono">
+                            <span class="text-xs text-primary/90 font-semibold font-mono">
                               {lesson.duration ? formatDuration(Math.ceil(lesson.duration / 60)) : '--:--'}
                             </span>
                           </li>
                         ))}
                         {(!section.lessons || section.lessons.length === 0) && (
-                          <li class="text-sm text-primary/40 italic p-2">No hay lecciones en esta sección.</li>
+                          <li class="text-sm text-primary/90 font-semibold italic p-2">No hay lecciones en esta sección.</li>
                         )}
                       </ul>
                     </div>
@@ -246,8 +246,8 @@ function formatDuration(minutes: number) {
 
             <!-- Guarantees -->
             <div class="flex flex-col gap-4 text-center px-4 py-2">
-              <p class="text-[10px] uppercase tracking-widest text-primary/40 font-bold">Este curso incluye:</p>
-              <ul class="text-sm text-primary/70 space-y-3 font-medium">
+              <p class="text-[10px] uppercase tracking-widest text-primary/90 font-bold">Este curso incluye:</p>
+              <ul class="text-sm text-primary/90 font-semibold space-y-3 font-medium">
                 <li class="flex items-center gap-3 justify-center">
                   <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                   Acceso de por vida

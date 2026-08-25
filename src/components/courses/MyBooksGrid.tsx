@@ -14,23 +14,32 @@ export const MyBooksGrid: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const fetchBooks = async (pageNum: number = 1, append: boolean = false) => {
+    try {
+      const response = await bookService.getMyBooks(pageNum);
+      if (append) {
+        setBooks(prev => [...prev, ...response.data]);
+      } else {
+        setBooks(response.data);
+      }
+      setTotalPages(response.totalPages || 1);
+      setPage(response.page || 1);
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar los libros');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const data = await bookService.getMyBooks();
-        setBooks(data);
-      } catch (err: any) {
-        setError(err.message || 'Error al cargar los libros');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBooks();
+    fetchBooks(1, false);
   }, []);
 
   if (loading) {
-    return <div className="py-32 text-center text-primary/60 font-body">Cargando tus libros...</div>;
+    return <div className="py-32 text-center text-primary/90 font-semibold font-body">Cargando tus libros...</div>;
   }
 
   if (error) {
@@ -44,6 +53,7 @@ export const MyBooksGrid: React.FC = () => {
   }
 
   return (
+    <>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
       {books.map((book) => (
         <div 
@@ -90,9 +100,21 @@ export const MyBooksGrid: React.FC = () => {
 
       {books.length === 0 && (
         <div className="col-span-full py-20 text-center">
-          <p className="text-primary/60 font-body">Aún no has creado ningún libro.</p>
+          <p className="text-primary/90 font-semibold font-body">Aún no has creado ningún libro.</p>
         </div>
       )}
     </div>
+
+    {!error && page < totalPages && (
+      <div className="mt-12 flex justify-center animate-in fade-in duration-500">
+        <button 
+          onClick={() => fetchBooks(page + 1, true)}
+          className="px-8 py-3 bg-[#C9A44A] text-[#0F172A] font-bold text-xs uppercase tracking-widest rounded-[12px] hover:bg-white transition-all cursor-pointer shadow-lg"
+        >
+          Cargar más
+        </button>
+      </div>
+    )}
+    </>
   );
 };

@@ -54,7 +54,7 @@ import Button from '../components/ui/Button.astro';
         <div id="login-view" class="auth-view transition-opacity duration-300">
           <div id="login-banner" class="hidden mb-8 bg-secondary/10 border border-secondary/20 p-4 rounded-lg flex items-start gap-3 animate-fade-in">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A44A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 flex-shrink-0"><path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5C2 7 4 5 6.5 5H18c2.2 0 4 1.8 4 4v8Z"/><path d="m22 10-8.53 4.42a2 2 0 0 1-1.94 0L3 10"/></svg>
-            <p class="text-xs text-primary/70 leading-relaxed font-body">
+            <p class="text-xs text-primary/90 font-semibold leading-relaxed font-body">
               <span class="font-bold text-secondary">¿No recibiste el correo?</span><br/>
               Revisa tu bandeja de entrada o spam. Si persiste, intenta entrar para reenviarlo.
             </p>
@@ -62,7 +62,7 @@ import Button from '../components/ui/Button.astro';
 
           <div id="password-updated-banner" class="hidden mb-8 bg-secondary/10 border border-secondary/20 p-4 rounded-lg flex items-start gap-3 animate-fade-in">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A44A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 flex-shrink-0"><path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5C2 7 4 5 6.5 5H18c2.2 0 4 1.8 4 4v8Z"/><path d="m22 10-8.53 4.42a2 2 0 0 1-1.94 0L3 10"/></svg>
-            <p class="text-xs text-primary/70 leading-relaxed font-body">
+            <p class="text-xs text-primary/90 font-semibold leading-relaxed font-body">
               <span class="font-bold text-secondary">Contraseña actualizada correctamente.</span><br/>
               Inicia sesión con tu nueva contraseña.
             </p>
@@ -70,12 +70,12 @@ import Button from '../components/ui/Button.astro';
 
           <div class="mb-10">
             <h2 class="text-3xl font-display text-primary mb-2">Bienvenido de nuevo</h2>
-            <p class="text-primary/50 text-sm font-body">Ingresa tus credenciales para acceder.</p>
+            <p class="text-primary/90 font-semibold text-sm font-body">Ingresa tus credenciales para acceder.</p>
           </div>
 
           <form id="login-form" class="space-y-8" novalidate>
             <div class="group relative">
-              <label for="login-email" class="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Correo Electrónico</label>
+              <label for="login-email" class="block text-[10px] font-bold uppercase tracking-widest text-primary/90 font-semibold group-focus-within:text-secondary transition-colors">Correo Electrónico</label>
               <input 
                 type="email" 
                 id="login-email" 
@@ -87,7 +87,7 @@ import Button from '../components/ui/Button.astro';
             </div>
 
             <div class="group relative">
-              <label for="login-password" class="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Contraseña</label>
+              <label for="login-password" class="block text-[10px] font-bold uppercase tracking-widest text-primary/90 font-semibold group-focus-within:text-secondary transition-colors">Contraseña</label>
               <div class="relative">
                 <input 
                   type="password" 
@@ -108,7 +108,7 @@ import Button from '../components/ui/Button.astro';
             <div class="flex items-center justify-between pt-2">
               <label class="flex items-center gap-2 cursor-pointer group">
                 <input type="checkbox" class="accent-secondary h-4 w-4" />
-                <span class="text-xs text-primary/50 group-hover:text-primary transition-colors">Recordarme</span>
+                <span class="text-xs text-primary/90 font-semibold group-hover:text-primary transition-colors">Recordarme</span>
               </label>
               <a href="/forgot-password" class="text-xs text-secondary font-bold hover:text-secondary/80 transition-all duration-200 cursor-pointer">¿Olvidaste tu contraseña?</a>
             </div>
@@ -118,7 +118,7 @@ import Button from '../components/ui/Button.astro';
             </Button>
           </form>
 
-          <p class="mt-8 text-center text-sm text-primary/40 font-body">
+          <p class="mt-8 text-center text-sm text-primary/90 font-semibold font-body">
             ¿No tienes una cuenta? 
             <button id="show-register" class="text-secondary font-bold hover:text-secondary/80 transition-all duration-200 cursor-pointer ml-1">Regístrate</button>
           </p>
@@ -128,12 +128,12 @@ import Button from '../components/ui/Button.astro';
         <div id="register-view" class="auth-view hidden opacity-0 transition-opacity duration-300">
           <div class="mb-10">
             <h2 class="text-3xl font-display text-primary mb-2">Crear Cuenta</h2>
-            <p class="text-primary/50 text-sm font-body">Únete a la élite educativa hoy mismo.</p>
+            <p class="text-primary/90 font-semibold text-sm font-body">Únete a la élite educativa hoy mismo.</p>
           </div>
 
           <form id="register-form" class="space-y-6" novalidate>
             <div class="group relative">
-              <label for="reg-name" class="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Nombre Completo</label>
+              <label for="reg-name" class="block text-[10px] font-bold uppercase tracking-widest text-primary/90 font-semibold group-focus-within:text-secondary transition-colors">Nombre Completo</label>
               <input 
                 type="text" 
                 id="reg-name" 
@@ -145,7 +145,7 @@ import Button from '../components/ui/Button.astro';
             </div>
 
             <div class="group relative">
-              <label for="reg-email" class="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Correo Electrónico</label>
+              <label for="reg-email" class="block text-[10px] font-bold uppercase tracking-widest text-primary/90 font-semibold group-focus-within:text-secondary transition-colors">Correo Electrónico</label>
               <input 
                 type="email" 
                 id="reg-email" 
@@ -157,7 +157,7 @@ import Button from '../components/ui/Button.astro';
             </div>
 
             <div class="group relative">
-              <label for="reg-password" class="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Contraseña</label>
+              <label for="reg-password" class="block text-[10px] font-bold uppercase tracking-widest text-primary/90 font-semibold group-focus-within:text-secondary transition-colors">Contraseña</label>
               <div class="relative">
                 <input 
                   type="password" 
@@ -176,7 +176,7 @@ import Button from '../components/ui/Button.astro';
             </div>
 
             <div class="group relative">
-              <label for="reg-confirm" class="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Confirmar Contraseña</label>
+              <label for="reg-confirm" class="block text-[10px] font-bold uppercase tracking-widest text-primary/90 font-semibold group-focus-within:text-secondary transition-colors">Confirmar Contraseña</label>
               <input 
                 type="password" 
                 id="reg-confirm" 
@@ -192,7 +192,7 @@ import Button from '../components/ui/Button.astro';
             </Button>
           </form>
 
-          <p class="mt-8 text-center text-sm text-primary/40 font-body">
+          <p class="mt-8 text-center text-sm text-primary/90 font-semibold font-body">
             ¿Ya tienes una cuenta? 
             <button id="show-login" class="text-secondary font-bold hover:text-secondary/80 transition-all duration-200 cursor-pointer ml-1">Inicia Sesión</button>
           </p>
@@ -205,7 +205,7 @@ import Button from '../components/ui/Button.astro';
           </div>
           
           <h2 class="text-3xl font-display text-primary mb-4 italic">¡Casi listo! Solo un paso más.</h2>
-          <p class="text-primary/60 text-base font-body mb-10 leading-relaxed max-w-sm mx-auto">
+          <p class="text-primary/90 font-semibold text-base font-body mb-10 leading-relaxed max-w-sm mx-auto">
             Hemos enviado un enlace de confirmación a tu correo. Por favor, revísalo (incluso en spam) para activar tu cuenta y acceder a la biblioteca.
           </p>
           
@@ -213,7 +213,6 @@ import Button from '../components/ui/Button.astro';
             Entendido
           </Button>
         </div>
-      </div>
       </div>
 
       <!-- Bottom link back to home -->
@@ -397,7 +396,7 @@ import Button from '../components/ui/Button.astro';
       showToast('¡Bienvenido de nuevo!', 'success');
       setTimeout(() => window.location.href = '/libros', 1000);
     } catch (err: any) {
-      console.error('[LoginError]', err);
+      void 0; /* error log removed */ // ('[LoginError]', err);
       const msg = Array.isArray(err.message) ? err.message[0] : err.message;
       
       // Smart 401 handling
@@ -460,7 +459,7 @@ import Button from '../components/ui/Button.astro';
       showToast('Cuenta creada con éxito', 'success');
       setTimeout(() => switchToSuccess(), 300);
     } catch (err: any) {
-      console.error('[RegisterError]', err);
+      void 0; /* error log removed */ // ('[RegisterError]', err);
       const msg = Array.isArray(err.message) ? err.message[0] : err.message;
       showError(emailInput, true, msg);
       showToast('Error al registrar', 'error');

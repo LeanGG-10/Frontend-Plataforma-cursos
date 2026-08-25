@@ -13,7 +13,7 @@ export default function CourseCTA({ productId, price }: CourseCTAProps) {
   const paypalWrapperRef = useRef<HTMLDivElement>(null);
 
   // Read environment variables via import.meta.env
-  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+  const API_URL = import.meta.env.PUBLIC_API_URL ;
   const PAYPAL_CLIENT_ID = import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || 'test';
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function CourseCTA({ productId, price }: CourseCTAProps) {
         const data = await coursesService.getCourseAccessStatus(productId, token, sessionId || '');
         setAccessData(data);
       } catch (error) {
-        console.error('Failed to check access status', error);
+        void 0; /* error log removed */ // ('Failed to check access status', error);
       } finally {
         setLoading(false);
       }
@@ -65,7 +65,7 @@ export default function CourseCTA({ productId, price }: CourseCTAProps) {
     return (
       <div className="bg-white/40 backdrop-blur-md p-8 rounded-[16px] border border-white/60 shadow-sm animate-pulse flex flex-col items-center justify-center min-h-[150px]">
         <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-4 text-xs text-primary/60 uppercase tracking-widest font-bold">Verificando acceso...</p>
+        <p className="mt-4 text-xs text-primary/90 font-semibold uppercase tracking-widest font-bold">Verificando acceso...</p>
       </div>
     );
   }
@@ -102,7 +102,7 @@ export default function CourseCTA({ productId, price }: CourseCTAProps) {
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
         </div>
         <h3 className="text-xl font-display font-bold text-primary text-center">¡Ya estás inscrito!</h3>
-        <p className="text-sm text-primary/60 text-center mb-4">Tienes acceso total a los contenidos de este curso.</p>
+        <p className="text-sm text-primary/90 font-semibold text-center mb-4">Tienes acceso total a los contenidos de este curso.</p>
         <a 
           href={`/cursos/${productId}/aprender`}
           className="w-full bg-[#2ecc71] text-white py-3 px-6 rounded-full text-sm font-bold uppercase tracking-wider hover:bg-[#27ae60] transition-all text-center"
@@ -121,7 +121,7 @@ export default function CourseCTA({ productId, price }: CourseCTAProps) {
           <span className="text-5xl font-display font-bold text-primary">
             ${price.toFixed(2)}
           </span>
-          <span className="text-xs text-primary/40 font-body">USD</span>
+          <span className="text-xs text-primary/90 font-semibold font-body">USD</span>
         </div>
       </div>
 
@@ -141,7 +141,7 @@ export default function CourseCTA({ productId, price }: CourseCTAProps) {
         <div id="paypal-login-prompt" className="hidden flex-col items-center justify-center gap-4 py-6 text-center">
           <svg className="w-12 h-12 text-secondary opacity-50 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
           <p className="text-sm font-bold text-primary">Inicia sesión para inscribirte</p>
-          <p className="text-xs text-primary/60 max-w-[250px]">Necesitas una cuenta para guardar tu progreso y acceder al curso.</p>
+          <p className="text-xs text-primary/90 font-semibold max-w-[250px]">Necesitas una cuenta para guardar tu progreso y acceder al curso.</p>
           <a href="/login" className="mt-2 bg-secondary text-primary px-8 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-secondary/90 transition-colors">
             Ir al Acceso
           </a>
@@ -153,7 +153,7 @@ export default function CourseCTA({ productId, price }: CourseCTAProps) {
 
         <div id="paypal-buttons-container" className="hidden flex-col w-full min-h-[150px]">
           <div id="paypal-button-mount" className="w-full relative z-0"></div>
-          <div className="flex items-center justify-center gap-2 mt-4 text-[10px] text-primary/40 uppercase tracking-widest">
+          <div className="flex items-center justify-center gap-2 mt-4 text-[10px] text-primary/90 font-semibold uppercase tracking-widest">
              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-11v6h2v-6h-2zm0-4v2h2V7h-2z"/></svg>
              Pago Seguro y Encriptado
           </div>

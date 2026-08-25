@@ -24,7 +24,7 @@ const AdminToggle = ({ label = 'Contenido' }: AdminToggleProps) => {
 
     try {
       const user = JSON.parse(rawData);
-      console.log("[AdminToggle] Verificando rol en elite_user_data");
+      void 0; /* log removed */ // ("[AdminToggle] Verificando rol en elite_user_data");
       
       // Verificación directa según requerimiento
       const hasAdminRole = user.role === 'ADMIN';
@@ -33,7 +33,7 @@ const AdminToggle = ({ label = 'Contenido' }: AdminToggleProps) => {
         setIsAdmin(hasAdminRole);
       }
     } catch (e) {
-      console.error('[AdminToggle] Error parsing storage:', e);
+      void 0; /* error log removed */ // ('[AdminToggle] Error parsing storage:', e);
       if (isAdmin) setIsAdmin(false);
     }
   }, [isAdmin]);
@@ -44,7 +44,7 @@ const AdminToggle = ({ label = 'Contenido' }: AdminToggleProps) => {
 
     // Sincronización por Eventos Personalizados (Broadcast)
     const handleAuthUpdate = () => {
-      console.log("[AdminToggle] Evento 'auth-updated' detectado");
+      void 0; /* log removed */ // ("[AdminToggle] Evento 'auth-updated' detectado");
       checkAdminStatus();
     };
 

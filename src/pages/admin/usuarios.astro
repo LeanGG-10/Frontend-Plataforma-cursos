@@ -1,29 +1,36 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/ui/Navbar.astro';
 import { AdminUsersTable } from '../../components/admin/AdminUsersTable';
 
-
+const year = new Date().getFullYear();
 ---
 
 <Layout title="Gestión de Usuarios | Élite Educativa">
-  <main class="min-h-screen bg-slate-50 dark:bg-slate-900/50 pt-[100px] pb-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
+  <Navbar />
+
+  <main class="min-h-screen bg-[#F7F2E8] pt-[100px] pb-16">
+    <div class="max-w-[95%] mx-auto">
+
       <div class="mb-8">
-        <h1 class="text-3xl sm:text-4xl font-display text-slate-900 dark:text-white mb-2">
+        <h1 class="text-3xl sm:text-4xl font-display text-primary mb-2">
           Gestión de Usuarios
         </h1>
-        <p class="text-slate-500 dark:text-slate-400 text-sm sm:text-base max-w-2xl">
+        <p class="text-primary/90 font-semibold text-sm sm:text-base max-w-2xl font-body">
           Administra los perfiles registrados en la plataforma, cambia sus roles y activa o desactiva sus cuentas.
         </p>
       </div>
-      
-      <div class="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
+
+      <div class="bg-white/80 rounded-lg shadow-sm border border-secondary/15 overflow-hidden">
         <AdminUsersTable client:load />
       </div>
 
     </div>
   </main>
+
+  <div class="text-center text-sm text-secondary font-semibold py-8 border-t border-secondary/15 mt-12 bg-[#F7F2E8]">
+    © {year} Élite Educativa · Panel de administración
+  </div>
 </Layout>
 
 <script>

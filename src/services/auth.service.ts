@@ -38,7 +38,7 @@ class AuthService {
       password: password.trim()
     };
 
-    console.log(`[AuthService] Iniciando login en: ${url}`);
+    void 0; /* log removed */ // (`[AuthService] Iniciando login en: ${url}`);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -47,7 +47,7 @@ class AuthService {
     });
 
     const data = await this.handleResponse<AuthResponse>(response);
-    console.log("[AuthService] Datos recibidos del server:", data);
+    void 0; /* log removed */ // ("[AuthService] Datos recibidos del server:", data);
 
     this.saveSession(data);
     
@@ -88,7 +88,7 @@ class AuthService {
     
     // Extracción directa del objeto user según requerimiento
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
-    console.log("[AuthService] Usuario guardado en elite_user_data:", userData);
+    void 0; /* log removed */ // ("[AuthService] Usuario guardado en elite_user_data:", userData);
   }
 
   logout() {

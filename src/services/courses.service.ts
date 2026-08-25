@@ -26,13 +26,12 @@ export interface CreateCoursePayload {
   level: 'Principiante' | 'Intermedio' | 'Avanzado';
   totalLessons: number;
   overrideDuplicateWarning?: boolean;
-}
-
-export interface UpdateCoursePayload extends Partial<CreateCoursePayload> {
   language?: string;
   learning_objectives?: string[];
   requirements?: string[];
 }
+
+export interface UpdateCoursePayload extends Partial<CreateCoursePayload> {}
 
 class CoursesService {
   private getAuthHeaders(isMultipart = false) {
@@ -100,15 +99,15 @@ class CoursesService {
     return response.json();
   }
 
-  async getAllCourses() {
-    const response = await fetch(`${API_URL}/courses`, {
+  async getAllCourses(page: number = 1) {
+    const response = await fetch(`${API_URL}/courses?page=${page}&limit=12`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
 
     if (!response.ok) {
       if (response.status === 404) {
-        return [];
+        return { data: [], total: 0, page: 1, totalPages: 1 };
       }
       throw new Error('Error al obtener los cursos');
     }
@@ -116,8 +115,8 @@ class CoursesService {
     return response.json();
   }
 
-  async getAllCoursesForAdmin() {
-    const response = await fetch(`${API_URL}/courses/admin`, {
+  async getAllCoursesForAdmin(page: number = 1) {
+    const response = await fetch(`${API_URL}/courses/admin?page=${page}&limit=12`, {
       method: 'GET',
       headers: this.getAuthHeaders(),
     });
@@ -125,8 +124,8 @@ class CoursesService {
     return response.json();
   }
 
-  async getMyCourses() {
-    const response = await fetch(`${API_URL}/courses/mine`, {
+  async getMyCourses(page: number = 1) {
+    const response = await fetch(`${API_URL}/courses/mine?page=${page}&limit=12`, {
       method: 'GET',
       headers: this.getAuthHeaders(),
     });
@@ -192,10 +191,53 @@ class CoursesService {
   }
 
   // ==========================================
-  // STRUCTURE (SECTIONS & LESSONS)
+  // STRUCTURE (MODULES, SECTIONS & LESSONS)
   // ==========================================
 
-  async createSection(courseId: string, payload: { title: string; position?: number }) {
+  // --- MODULES ---
+
+  async createModule(courseId: string, payload: { title: string; position?: number }) {
+    const response = await fetch(`${API_URL}/courses/${courseId}/modules`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('Error al crear el módulo');
+    return response.json();
+  }
+
+  async updateModule(courseId: string, moduleId: string, payload: { title: string }) {
+    const response = await fetch(`${API_URL}/courses/${courseId}/modules/${moduleId}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('Error al actualizar el módulo');
+    return response.json();
+  }
+
+  async deleteModule(courseId: string, moduleId: string) {
+    const response = await fetch(`${API_URL}/courses/${courseId}/modules/${moduleId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Error al eliminar el módulo');
+    return response.json();
+  }
+
+  async reorderModules(courseId: string, modules: { id: string; position: number }[]) {
+    const response = await fetch(`${API_URL}/courses/${courseId}/modules/reorder`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ modules }),
+    });
+    if (!response.ok) throw new Error('Error al reordenar los módulos');
+    return response.json();
+  }
+
+  // --- SECTIONS ---
+
+  async createSection(courseId: string, payload: { title: string; position?: number; moduleId: string }) {
     const response = await fetch(`${API_URL}/courses/${courseId}/sections`, {
       method: 'POST',
       headers: this.getAuthHeaders(),

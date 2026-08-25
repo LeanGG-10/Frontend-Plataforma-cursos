@@ -15,7 +15,7 @@ const FeaturedBooksList: React.FC = () => {
       setBooks(data);
       setError(null);
     } catch (error: any) {
-      console.error('Error fetching featured books:', error);
+      void 0; /* error log removed */ // ('Error fetching featured books:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -57,7 +57,7 @@ const FeaturedBooksList: React.FC = () => {
   if (books.length === 0) {
     return (
       <div className="py-24 text-center">
-        <p className="text-primary/40 font-display text-2xl italic">No hay obras destacadas en este momento.</p>
+        <p className="text-primary/90 font-semibold font-display text-2xl italic">No hay obras destacadas en este momento.</p>
       </div>
     );
   }

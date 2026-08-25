@@ -20,6 +20,8 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [categoryFilter, setCategoryFilter] = useState('Todas');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   
   // Dynamic Categories
   const [categories, setCategories] = useState<Category[]>([]);
@@ -55,13 +57,19 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
   });
 
   // Fetch books to keep list updated
-  const refreshBooks = async () => {
+  const refreshBooks = async (pageNum: number = 1, append: boolean = false) => {
     try {
-      const data = await bookService.getAllBooks();
-      setBooks(data);
+      const response = await bookService.getAllBooks(pageNum);
+      if (append) {
+        setBooks(prev => [...prev, ...response.data]);
+      } else {
+        setBooks(response.data);
+      }
+      setTotalPages(response.totalPages || 1);
+      setPage(response.page || 1);
       setError(null);
     } catch (error: any) {
-      console.error('Error refreshing books:', error);
+      void 0; /* error log removed */ // ('Error refreshing books:', error);
       setError(error.message);
     }
   };
@@ -88,7 +96,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
       if (pillsContainer) {
         pillsContainer.innerHTML = data.map(cat => `
           <button 
-            class="category-pill px-4 py-2 rounded-full border border-secondary/10 text-[11px] font-bold uppercase tracking-wider text-primary/60 hover:bg-secondary hover:text-primary transition-all cursor-pointer"
+            class="category-pill px-4 py-2 rounded-full border border-secondary/10 text-[11px] font-bold uppercase tracking-wider text-primary/90 font-semibold hover:bg-secondary hover:text-primary transition-all cursor-pointer"
             data-category="${cat.name}"
           >
             ${cat.name}
@@ -282,7 +290,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
               </div>
               <div className="text-center">
                 <span className="block text-lg font-display font-bold text-primary italic">Añadir Libro</span>
-                <span className="text-xs font-body text-primary/40 uppercase tracking-widest mt-1">Nuevo recurso</span>
+                <span className="text-xs font-body text-primary/90 font-semibold uppercase tracking-widest mt-1">Nuevo recurso</span>
               </div>
             </button>
 
@@ -291,7 +299,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
               className="group border border-secondary/20 rounded-[12px] py-4 flex items-center justify-center gap-3 bg-white hover:bg-secondary/5 transition-all duration-300 cursor-pointer"
             >
               <Settings size={18} className="text-secondary group-hover:rotate-90 transition-transform duration-500" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/60 group-hover:text-primary">Gestionar Categorías</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/90 font-semibold group-hover:text-primary">Gestionar Categorías</span>
             </button>
           </div>
         )}
@@ -329,9 +337,20 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
         <div className="py-32 text-center animate-in fade-in duration-500">
           <div className="max-w-md mx-auto">
              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#C9A44A" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-6 opacity-20"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-             <h3 className="text-2xl font-display text-primary/60 italic mb-2">No se encontraron coincidencias</h3>
-             <p className="text-primary/40 font-body text-sm">Prueba seleccionando otra categoría o restablece los filtros.</p>
+             <h3 className="text-2xl font-display text-primary/90 font-semibold italic mb-2">No se encontraron coincidencias</h3>
+             <p className="text-primary/90 font-semibold font-body text-sm">Prueba seleccionando otra categoría o restablece los filtros.</p>
           </div>
+        </div>
+      )}
+
+      {!error && page < totalPages && (
+        <div className="mt-12 flex justify-center animate-in fade-in duration-500">
+          <button 
+            onClick={() => refreshBooks(page + 1, true)}
+            className="px-8 py-3 bg-[#C9A44A] text-[#0F172A] font-bold text-xs uppercase tracking-widest rounded-[12px] hover:bg-white transition-all cursor-pointer shadow-lg"
+          >
+            Cargar más
+          </button>
         </div>
       )}
 
@@ -341,7 +360,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
         title="Confirmar Eliminación"
       >
         <div className="space-y-6">
-          <p className="text-primary/70 font-body">
+          <p className="text-primary/90 font-semibold font-body">
             ¿Estás seguro de eliminar <span className="font-bold text-primary">"{bookToDelete?.title}"</span>? 
             Esta acción no se puede deshacer.
           </p>
@@ -376,7 +395,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
       >
         <form onSubmit={handleAddSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Título de la Obra</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Título de la Obra</label>
             <input 
               type="text" 
               required
@@ -390,7 +409,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Categoría</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Categoría</label>
               <select 
                 required
                 disabled={loading || loadingCategories}
@@ -411,7 +430,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Precio ($)</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Precio ($)</label>
               <input 
                 type="number" 
                 step="0.01"
@@ -426,7 +445,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Descripción de la Obra</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Descripción de la Obra</label>
             <textarea 
               required
               disabled={loading}
@@ -441,7 +460,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Input Portada */}
             <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Portada (Imagen)</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Portada (Imagen)</label>
               <div className="relative group">
                 <input 
                   type="file" 
@@ -463,7 +482,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
                       <span className="text-[10px] mt-1 font-bold truncate max-w-[120px]">{files.cover.name}</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center text-primary/40 group-hover:text-secondary transition-colors">
+                    <div className="flex flex-col items-center text-primary/90 font-semibold group-hover:text-secondary transition-colors">
                       <Upload size={24} />
                       <span className="text-[10px] mt-1 font-bold">Subir Imagen</span>
                     </div>
@@ -474,7 +493,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
 
             {/* Input PDF */}
             <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/40 ml-1">Archivo (PDF)</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-primary/90 font-semibold ml-1">Archivo (PDF)</label>
               <div className="relative group">
                 <input 
                   type="file" 
@@ -496,7 +515,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
                       <span className="text-[10px] mt-1 font-bold truncate max-w-[120px]">{files.pdf.name}</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center text-primary/40 group-hover:text-secondary transition-colors">
+                    <div className="flex flex-col items-center text-primary/90 font-semibold group-hover:text-secondary transition-colors">
                       <Upload size={24} />
                       <span className="text-[10px] mt-1 font-bold">Subir PDF</span>
                     </div>
@@ -509,7 +528,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
           {/* Progress Bar */}
           {loading && (
             <div className="space-y-2 pt-2 animate-in fade-in duration-300">
-              <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-primary/40">
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-primary/90 font-semibold">
                 <span>Procesando archivos...</span>
                 <span>{uploadProgress}%</span>
               </div>
@@ -527,7 +546,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
               type="button"
               onClick={resetForm}
               disabled={loading}
-              className="flex-1 text-primary/50 font-bold text-[10px] uppercase tracking-widest py-4 rounded-[12px] border border-secondary/10 hover:bg-tertiary/50 hover:text-primary transition-all cursor-pointer disabled:opacity-50"
+              className="flex-1 text-primary/90 font-bold text-[10px] uppercase tracking-widest py-4 rounded-[12px] border border-secondary/10 hover:bg-tertiary/50 hover:text-primary transition-all cursor-pointer disabled:opacity-50"
             >
               Limpiar
             </button>
@@ -604,13 +623,13 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
                           setEditingCatId(cat.id);
                           setEditingCatName(cat.name);
                         }}
-                        className="p-1.5 text-primary/40 hover:text-secondary transition-colors"
+                        className="p-1.5 text-primary/90 font-semibold hover:text-secondary transition-colors"
                       >
                         <Edit2 size={14} />
                       </button>
                       <button 
                         onClick={() => handleDeleteCategory(cat.id)}
-                        className="p-1.5 text-primary/40 hover:text-red-500 transition-colors"
+                        className="p-1.5 text-primary/90 font-semibold hover:text-red-500 transition-colors"
                       >
                         <Trash size={14} />
                       </button>

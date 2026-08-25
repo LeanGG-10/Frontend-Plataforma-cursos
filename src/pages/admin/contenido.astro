@@ -1,25 +1,38 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/ui/Navbar.astro';
 import AdminCoursesPending from '../../components/admin/AdminCoursesPending';
+
+const year = new Date().getFullYear();
 ---
 
-<Layout title="Cursos Pendientes de Revisión | Élite Educativa">
-  <main class="min-h-screen bg-slate-50 dark:bg-slate-900/50 pt-[100px] pb-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
+<Layout title="Cursos Pendientes y Borradores | Élite Educativa">
+  <Navbar />
+
+  <main class="min-h-screen bg-[#F7F2E8] pt-[100px] pb-16">
+    <div class="max-w-[95%] mx-auto">
+
+      <a href="/cursos" class="inline-flex items-center gap-1.5 text-xs tracking-wide text-secondary font-semibold hover:text-secondary/80 transition-colors mb-4">
+        ← Ir al catálogo de cursos
+      </a>
+
       <div class="mb-8">
-        <h1 class="text-3xl sm:text-4xl font-display text-slate-900 dark:text-white mb-2">
-          Cursos Pendientes de Revisión
+        <h1 class="text-3xl sm:text-4xl font-display text-primary mb-2">
+          Gestión de Contenido
         </h1>
-        <p class="text-slate-500 dark:text-slate-400 text-sm sm:text-base max-w-2xl font-sans">
-          Revisa y aprueba o rechaza los cursos enviados por los profesores antes de que sean visibles en el catálogo público.
+        <p class="text-primary/90 font-semibold text-sm sm:text-base max-w-2xl font-body">
+          Revisa los cursos enviados por los profesores o retoma los borradores creados por los administradores.
         </p>
       </div>
-      
+
       <AdminCoursesPending client:load />
 
     </div>
   </main>
+
+  <div class="text-center text-sm text-secondary font-semibold py-8 border-t border-secondary/15 mt-12 bg-[#F7F2E8]">
+    © {year} Élite Educativa · Panel de administración
+  </div>
 </Layout>
 
 <script>
@@ -30,9 +43,3 @@ import AdminCoursesPending from '../../components/admin/AdminCoursesPending';
     window.location.href = '/acceso-denegado';
   }
 </script>
-
-<style>
-  h1, .font-display {
-    font-family: 'Cormorant Garamond', serif;
-  }
-</style>

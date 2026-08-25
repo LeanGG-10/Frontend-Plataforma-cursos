@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { coursesService } from '../../services/courses.service';
-import { Loader2, UploadCloud, Clock, CheckCircle2, AlertCircle, FileText, X, ClipboardList } from 'lucide-react';
+import { Loader2, UploadCloud, Clock, CheckCircle2, AlertCircle, FileText, X, ClipboardList, Download } from 'lucide-react';
 
 interface StudentAssignmentViewProps {
   sectionId: string;
@@ -16,6 +16,7 @@ export default function StudentAssignmentView({ sectionId, lessonId, title }: St
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,7 +52,7 @@ export default function StudentAssignmentView({ sectionId, lessonId, title }: St
         }
       }
     } catch (error) {
-      console.error(error);
+      void 0; /* error log removed */ // (error);
     } finally {
       setLoading(false);
     }
@@ -114,7 +115,7 @@ export default function StudentAssignmentView({ sectionId, lessonId, title }: St
       await coursesService.submitAssignment(sectionId, lessonId, file);
       setFile(null);
       await fetchStatus();
-      alert('¡Tarea entregada con éxito!');
+      setShowSuccessModal(true);
     } catch (error: any) {
       alert(error.message || 'Error al enviar la tarea');
     } finally {
@@ -122,43 +123,70 @@ export default function StudentAssignmentView({ sectionId, lessonId, title }: St
     }
   };
 
+  const getFileExtension = (url: string | null) => {
+    if (!url) return 'file';
+    const cleanUrl = url.split('?')[0];
+    const parts = cleanUrl.split('.');
+    return parts.length > 1 ? parts.pop() : 'file';
+  };
+
+  const handleDownload = async (e: React.MouseEvent, url: string, baseName: string) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Error downloading');
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${baseName}.${getFileExtension(url)}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      void 0; /* error log removed */ // ('Download failed', error);
+      window.open(url, '_blank');
+    }
+  };
+
   if (loading && !submission && status === 'NOT_STARTED') {
     return (
       <div className="flex flex-col items-center justify-center p-12">
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-4" />
-        <p className="text-slate-400">Cargando actividad...</p>
+        <p className="text-primary/90 font-semibold">Cargando actividad...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 md:p-8 shadow-xl max-w-4xl mx-auto w-full">
+    <div className="bg-white/60 rounded-2xl border border-white/40 p-6 md:p-8 shadow-xl max-w-4xl mx-auto w-full">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
           <ClipboardList size={24} />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white">{title}</h2>
-          <p className="text-slate-400 text-sm">Actividad Práctica</p>
+          <h2 className="text-2xl font-bold text-primary">{title}</h2>
+          <p className="text-primary/90 font-semibold text-sm">Actividad Práctica</p>
         </div>
       </div>
 
       {lessonData?.description && (
-        <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-700/50 mb-8 prose prose-invert max-w-none">
-          <h3 className="text-lg font-semibold text-slate-300 mb-3 flex items-center gap-2">
+        <div className="bg-white/50 p-6 rounded-xl border border-white/30 mb-8 prose  max-w-none">
+          <h3 className="text-lg font-semibold text-primary/80 mb-3 flex items-center gap-2">
             <FileText size={18} /> Instrucciones
           </h3>
           <div dangerouslySetInnerHTML={{ __html: lessonData.description }} />
           
-          <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t border-slate-700/50">
+          <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t border-white/30">
             {lessonData.assignment_duration_hours && (
-              <div className="bg-slate-800 px-3 py-1.5 rounded-lg text-sm text-slate-300 flex items-center gap-2">
+              <div className="bg-white/60 px-3 py-1.5 rounded-lg text-sm text-primary/80 flex items-center gap-2">
                 <Clock size={14} className="text-indigo-400" />
                 Tiempo límite: <strong>{lessonData.assignment_duration_hours} horas</strong>
               </div>
             )}
             {lessonData.max_score && (
-              <div className="bg-slate-800 px-3 py-1.5 rounded-lg text-sm text-slate-300 flex items-center gap-2">
+              <div className="bg-white/60 px-3 py-1.5 rounded-lg text-sm text-primary/80 flex items-center gap-2">
                 <CheckCircle2 size={14} className="text-emerald-400" />
                 Nota máxima: <strong>{lessonData.max_score}</strong>
               </div>
@@ -169,13 +197,13 @@ export default function StudentAssignmentView({ sectionId, lessonId, title }: St
 
       {status === 'NOT_STARTED' && (
         <div className="text-center p-8 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
-          <h3 className="text-xl font-bold text-white mb-2">¿Listo para comenzar?</h3>
-          <p className="text-slate-400 mb-6 max-w-md mx-auto">
+          <h3 className="text-xl font-bold text-primary mb-2">¿Listo para comenzar?</h3>
+          <p className="text-primary/90 font-semibold mb-6 max-w-md mx-auto">
             Una vez que inicies, el temporizador comenzará y tendrás {lessonData?.assignment_duration_hours || 24} horas para subir tu respuesta.
           </p>
           <button
             onClick={handleStart}
-            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20"
+            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-primary font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20"
           >
             Iniciar Actividad
           </button>
@@ -184,14 +212,14 @@ export default function StudentAssignmentView({ sectionId, lessonId, title }: St
 
       {(status === 'IN_PROGRESS' || status === 'SUBMITTED') && timeRemaining !== null && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between p-4 bg-slate-900 rounded-xl border border-slate-700">
+          <div className="flex items-center justify-between p-4 bg-white/80 rounded-xl border border-white/40">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center animate-pulse">
                 <Clock size={20} />
               </div>
               <div>
                 <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest">Tiempo Restante</p>
-                <p className="text-2xl font-mono font-bold text-white">{formatTime(timeRemaining)}</p>
+                <p className="text-2xl font-mono font-bold text-primary">{formatTime(timeRemaining)}</p>
               </div>
             </div>
             {status === 'SUBMITTED' && (
@@ -203,16 +231,16 @@ export default function StudentAssignmentView({ sectionId, lessonId, title }: St
             )}
           </div>
 
-          <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-700 border-dashed text-center">
+          <div className="bg-white/50 p-6 rounded-xl border border-white/40 border-dashed text-center">
             {file ? (
-              <div className="flex items-center justify-between p-4 bg-slate-800 rounded-xl border border-slate-700">
+              <div className="flex items-center justify-between p-4 bg-white/60 rounded-xl border border-white/40">
                 <div className="flex items-center gap-3 overflow-hidden">
                   <FileText className="text-indigo-400 shrink-0" size={24} />
-                  <span className="text-slate-300 font-medium truncate">{file.name}</span>
+                  <span className="text-primary/80 font-medium truncate">{file.name}</span>
                 </div>
                 <button
                   onClick={() => setFile(null)}
-                  className="p-2 text-slate-400 hover:text-red-400 transition-colors"
+                  className="p-2 text-primary/90 font-semibold hover:text-red-400 transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -220,11 +248,11 @@ export default function StudentAssignmentView({ sectionId, lessonId, title }: St
             ) : (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="cursor-pointer py-8 flex flex-col items-center justify-center hover:bg-slate-800/50 transition-colors rounded-lg"
+                className="cursor-pointer py-8 flex flex-col items-center justify-center hover:bg-white/40 transition-colors rounded-lg"
               >
                 <UploadCloud className="w-12 h-12 text-indigo-400 mb-3" />
-                <p className="text-white font-medium mb-1">Haz clic para seleccionar tu archivo</p>
-                <p className="text-slate-500 text-sm">
+                <p className="text-primary font-medium mb-1">Haz clic para seleccionar tu archivo</p>
+                <p className="text-primary/90 font-semibold text-sm">
                   {lessonData?.allowed_file_types || 'PDF, ZIP, DOCX'}
                 </p>
               </div>
@@ -241,17 +269,19 @@ export default function StudentAssignmentView({ sectionId, lessonId, title }: St
               {submission?.download_url && !file && (
                 <a
                   href={submission.download_url}
+                  download
                   target="_blank"
                   rel="noreferrer"
-                  className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-xl transition-colors"
+                  onClick={(e) => handleDownload(e, submission.download_url, `Entrega_${title.replace(/[^a-zA-Z0-9]/g, '_')}`)}
+                  className="px-6 py-2.5 bg-white/80 hover:bg-white text-primary font-medium rounded-xl transition-colors flex items-center gap-2 cursor-pointer"
                 >
-                  Ver entrega actual
+                  <Download size={18} /> Descargar entrega actual
                 </a>
               )}
               <button
                 onClick={handleSubmit}
                 disabled={!file || uploading}
-                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-primary font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
               >
                 {uploading ? <Loader2 size={18} className="animate-spin" /> : <UploadCloud size={18} />}
                 {submission?.file_url ? 'Reemplazar Tarea' : 'Enviar Tarea'}
@@ -265,17 +295,19 @@ export default function StudentAssignmentView({ sectionId, lessonId, title }: St
         <div className="p-6 bg-red-500/10 rounded-xl border border-red-500/30 text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
           <h3 className="text-xl font-bold text-red-400 mb-2">Tiempo agotado</h3>
-          <p className="text-slate-300 mb-4">
+          <p className="text-primary/80 mb-4">
             El tiempo límite para entregar esta actividad ha finalizado.
           </p>
           {submission?.download_url && (
             <a
               href={submission.download_url}
+              download
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-xl transition-colors"
+              onClick={(e) => handleDownload(e, submission.download_url, `Entrega_${title.replace(/[^a-zA-Z0-9]/g, '_')}`)}
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-white/80 hover:bg-white text-primary font-medium rounded-xl transition-colors cursor-pointer"
             >
-              <FileText size={18} /> Ver entrega realizada
+              <Download size={18} /> Descargar entrega realizada
             </a>
           )}
         </div>
@@ -283,39 +315,65 @@ export default function StudentAssignmentView({ sectionId, lessonId, title }: St
 
       {status === 'GRADED' && (
         <div className="space-y-6">
-          <div className="p-6 bg-emerald-500/10 rounded-xl border border-emerald-500/30 flex flex-col md:flex-row items-center gap-6">
-            <div className="w-24 h-24 shrink-0 rounded-full bg-emerald-500/20 border-4 border-emerald-500/30 flex items-center justify-center flex-col">
-              <span className="text-3xl font-black text-emerald-400">{submission?.grade}</span>
-              <span className="text-[10px] uppercase font-bold text-emerald-500/80 tracking-widest">/ {lessonData?.max_score}</span>
+          <div className="p-6 bg-indigo-500/10 rounded-xl border border-indigo-500/30 flex flex-col md:flex-row items-center gap-6">
+            <div className="w-24 h-24 shrink-0 rounded-full bg-indigo-500/20 border-4 border-indigo-500/30 flex items-center justify-center flex-col">
+              <span className="text-3xl font-black text-indigo-400">{submission?.grade}</span>
+              <span className="text-[10px] uppercase font-bold text-indigo-500/80 tracking-widest">/ {lessonData?.max_score}</span>
             </div>
             <div className="flex-1 text-center md:text-left">
-              <h3 className="text-xl font-bold text-emerald-400 mb-2">¡Actividad Calificada!</h3>
-              <p className="text-slate-300">
+              <h3 className="text-xl font-bold text-indigo-400 mb-2">¡Actividad Calificada!</h3>
+              <p className="text-primary/80">
                 Tu tarea ha sido evaluada por el instructor.
               </p>
             </div>
             {submission?.download_url && (
               <a
                 href={submission.download_url}
+                download
                 target="_blank"
                 rel="noreferrer"
-                className="shrink-0 px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-medium rounded-xl transition-colors flex items-center gap-2"
+                onClick={(e) => handleDownload(e, submission.download_url, `Entrega_${title.replace(/[^a-zA-Z0-9]/g, '_')}`)}
+                className="shrink-0 px-6 py-3 bg-white/60 hover:bg-white/80 border border-white/50 text-primary font-medium rounded-xl transition-colors flex items-center gap-2 cursor-pointer"
               >
-                <FileText size={18} /> Tu entrega
+                <Download size={18} /> Descargar tu entrega
               </a>
             )}
           </div>
 
           {submission?.feedback && (
-            <div className="p-6 bg-slate-900 rounded-xl border border-slate-700 relative">
-              <div className="absolute top-0 left-6 -translate-y-1/2 bg-slate-800 px-3 py-1 rounded-full border border-slate-600 text-xs font-bold text-slate-300 uppercase tracking-widest">
+            <div className="p-6 bg-white/80 rounded-xl border border-white/40 relative">
+              <div className="absolute top-0 left-6 -translate-y-1/2 bg-white/60 px-3 py-1 rounded-full border border-white/50 text-xs font-bold text-primary/80 uppercase tracking-widest">
                 Retroalimentación
               </div>
-              <p className="text-slate-300 leading-relaxed whitespace-pre-wrap mt-2">
+              <p className="text-primary/80 leading-relaxed whitespace-pre-wrap mt-2">
                 {submission.feedback}
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-white/80/80 backdrop-blur-sm">
+          <div className="bg-white/60 rounded-3xl border border-white/40 p-8 md:p-12 shadow-2xl max-w-md w-full text-center relative overflow-hidden">
+            <div className="absolute top-0 inset-x-0 h-32 opacity-20 pointer-events-none bg-gradient-to-b from-emerald-500 to-transparent" />
+            
+            <div className="w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center ring-4 bg-emerald-500/20 text-emerald-400 ring-emerald-500/30">
+              <CheckCircle2 size={48} />
+            </div>
+            
+            <h3 className="text-2xl font-bold text-primary mb-3">¡Tarea Entregada!</h3>
+            <p className="text-primary/80 mb-8">
+              Tu deber ha sido subido correctamente y está pendiente de calificación.
+            </p>
+            
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-primary font-bold rounded-xl transition-all shadow-lg shadow-indigo-900/20 cursor-pointer"
+            >
+              Entendido
+            </button>
+          </div>
         </div>
       )}
     </div>

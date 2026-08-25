@@ -35,7 +35,7 @@ export default function ForgotPasswordForm() {
     <div className="w-full auth-view animate-fade-in">
       <div className="mb-10">
         <h2 className="text-3xl font-display text-primary mb-2">Recuperar Contraseña</h2>
-        <p className="text-primary/50 text-sm font-body">Ingresa tu correo y te enviaremos instrucciones.</p>
+        <p className="text-primary/90 font-semibold text-sm font-body">Ingresa tu correo y te enviaremos instrucciones.</p>
       </div>
 
       {(status === 'success' || status === 'rate-limit' || status === 'error') && (
@@ -43,7 +43,7 @@ export default function ForgotPasswordForm() {
           {status === 'success' ? (
             <>
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A44A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-shrink-0"><path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5C2 7 4 5 6.5 5H18c2.2 0 4 1.8 4 4v8Z"/><path d="m22 10-8.53 4.42a2 2 0 0 1-1.94 0L3 10"/></svg>
-              <p className="text-xs text-primary/70 leading-relaxed font-body">
+              <p className="text-xs text-primary/90 font-semibold leading-relaxed font-body">
                 Si el correo está registrado, recibirás un enlace de recuperación.
               </p>
             </>
@@ -67,7 +67,7 @@ export default function ForgotPasswordForm() {
 
       <form onSubmit={handleSubmit} className="space-y-8" noValidate>
         <div className="group relative">
-          <label htmlFor="forgot-email" className="block text-[10px] font-bold uppercase tracking-widest text-primary/40 group-focus-within:text-secondary transition-colors">Correo Electrónico</label>
+          <label htmlFor="forgot-email" className="block text-[10px] font-bold uppercase tracking-widest text-primary/90 font-semibold group-focus-within:text-secondary transition-colors">Correo Electrónico</label>
           <input 
             type="email" 
             id="forgot-email" 

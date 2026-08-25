@@ -58,6 +58,35 @@ export default function AssignmentGradingModal({ sectionId, lessonId, lessonTitl
       setLoading(false);
     }
   };
+  const getFileExtension = (url: string) => {
+    try {
+      const urlWithoutQuery = url.split('?')[0];
+      const parts = urlWithoutQuery.split('.');
+      return parts.length > 1 ? parts.pop() : 'file';
+    } catch {
+      return 'file';
+    }
+  };
+
+  const handleDownload = async (e: React.MouseEvent, url: string, baseName: string) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Error downloading');
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${baseName}.${getFileExtension(url)}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      void 0; /* error log removed */ // ('Download failed', error);
+      window.open(url, '_blank');
+    }
+  };
 
   const handleSaveGrade = async (submissionId: string) => {
     const data = grades[submissionId];
@@ -90,7 +119,7 @@ export default function AssignmentGradingModal({ sectionId, lessonId, lessonTitl
             <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Entregas de Alumnos</h3>
             <p className="text-sm text-slate-500 mt-1">{lessonTitle}</p>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-white dark:bg-slate-700 rounded-full shadow-sm">
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-white dark:bg-slate-700 rounded-full shadow-sm cursor-pointer">
             <X size={20} />
           </button>
         </div>
@@ -151,15 +180,13 @@ export default function AssignmentGradingModal({ sectionId, lessonId, lessonTitl
                       </td>
                       <td className="px-4 py-4 text-center">
                         {sub.download_url ? (
-                          <a
-                            href={sub.download_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:text-indigo-300 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 rounded-lg transition-colors border border-indigo-200 dark:border-indigo-800"
+                          <button
+                            onClick={(e) => handleDownload(e, sub.download_url!, `${sub.profile.full_name || 'Estudiante'}_${lessonTitle}`.replace(/[^a-zA-Z0-9_ -]/g, ''))}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:text-indigo-300 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 rounded-lg transition-colors border border-indigo-200 dark:border-indigo-800 cursor-pointer"
                           >
                             <Download size={14} />
                             Descargar
-                          </a>
+                          </button>
                         ) : (
                           <span className="text-xs text-slate-400 italic">Sin archivo</span>
                         )}
@@ -189,7 +216,7 @@ export default function AssignmentGradingModal({ sectionId, lessonId, lessonTitl
                         <button
                           onClick={() => handleSaveGrade(sub.id)}
                           disabled={!grades[sub.id]?.grade || submittingGrade === sub.id}
-                          className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2 justify-center w-full"
+                          className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2 justify-center w-full cursor-pointer"
                         >
                           {submittingGrade === sub.id ? (
                             <Loader2 size={14} className="animate-spin" />

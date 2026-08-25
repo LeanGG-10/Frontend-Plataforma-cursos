@@ -77,7 +77,7 @@ const BookCardReact: React.FC<BookCardProps> = ({
         <h3 className={`text-xl font-display font-semibold transition-colors duration-300 group-hover:text-[#C9A44A] ${textClass}`}>
           {title}
         </h3>
-        <p className={`text-sm font-body italic opacity-60 ${textClass}`}>
+        <p className={`text-sm font-body font-semibold italic opacity-90 ${textClass}`}>
           {author}
         </p>
       </div>

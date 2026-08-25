@@ -1,16 +1,18 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/ui/Navbar.astro';
 import { MyCoursesGrid } from '../components/courses/MyCoursesGrid';
 ---
 
 <Layout title="Mis Cursos | Élite Educativa">
-  <main className="min-h-screen bg-slate-50 dark:bg-slate-900/50 pt-[100px] pb-16">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-display text-slate-900 dark:text-white mb-2">
+  <Navbar />
+  <main class="min-h-screen bg-[#F7F2E8] pt-[100px] pb-16">
+    <div class="max-w-[95%] mx-auto">
+      <div class="mb-8">
+        <h1 class="text-3xl sm:text-4xl font-display text-primary mb-2">
           Mis Cursos
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base max-w-2xl">
+        <p class="text-primary/90 font-semibold text-sm sm:text-base max-w-2xl font-body">
           Gestiona los cursos que has creado como profesor.
         </p>
       </div>

@@ -15,10 +15,10 @@ const FeaturedBooksManager: React.FC = () => {
   const fetchAllBooks = async () => {
     setLoading(true);
     try {
-      const data = await bookService.getAllBooks();
-      setAllBooks(data);
+      const response = await bookService.getAllBooks();
+      setAllBooks(response.data);
     } catch (error) {
-      console.error('Error fetching books for featured manager:', error);
+      void 0;
     } finally {
       setLoading(false);
     }
@@ -66,7 +66,7 @@ const FeaturedBooksManager: React.FC = () => {
         title="Seleccionar Libros Destacados"
       >
         <div className="space-y-6">
-          <p className="text-xs text-primary/50 font-body leading-relaxed">
+          <p className="text-xs text-primary/90 font-semibold font-body leading-relaxed">
             Selecciona hasta 4 obras para mostrar en la sección principal. Solo aparecerán las que tengan el icono dorado.
           </p>
 
@@ -87,7 +87,7 @@ const FeaturedBooksManager: React.FC = () => {
                     <img src={book.image} className="w-12 h-16 object-cover rounded-[4px] shadow-sm" alt="" />
                     <div>
                       <h4 className="text-sm font-display font-bold text-primary">{book.title}</h4>
-                      <p className="text-[10px] text-primary/40 uppercase tracking-widest">{book.author}</p>
+                      <p className="text-[10px] text-primary/90 font-semibold uppercase tracking-widest">{book.author}</p>
                     </div>
                   </div>
 

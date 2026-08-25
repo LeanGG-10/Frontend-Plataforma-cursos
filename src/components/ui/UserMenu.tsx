@@ -66,7 +66,7 @@ export const UserMenu: React.FC = () => {
     <div className="relative z-[60]" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-10 h-10 rounded-full bg-secondary/10 border border-secondary/50 flex items-center justify-center text-tertiary hover:bg-secondary/20 transition-colors focus:outline-none"
+        className="w-10 h-10 rounded-full bg-secondary/10 border border-secondary/50 flex items-center justify-center text-tertiary hover:bg-secondary/20 transition-colors focus:outline-none cursor-pointer"
         aria-label="Menú de usuario"
       >
         {/* Ícono de avatar genérico */}
@@ -113,7 +113,7 @@ export const UserMenu: React.FC = () => {
           <div className="py-2">
             <button
               onClick={handleLogout}
-              className="w-full text-left block px-4 py-2 text-sm text-tertiary/90 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+              className="w-full text-left block px-4 py-2 text-sm text-tertiary/90 hover:bg-red-500/10 hover:text-red-500 transition-colors cursor-pointer"
             >
               Cerrar sesión
             </button>

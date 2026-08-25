@@ -25,7 +25,7 @@ export default function AdminActionBar({ courseId, currentStatus }: AdminActionB
   }, []);
 
   if (!isAdmin) return null;
-  if (status !== 'PENDING_REVIEW') return null;
+  if (status !== 'PENDING_REVIEW' && !messageModal.visible) return null;
 
   const handleApproveClick = () => {
     setApprovalConfirmModal(true);
@@ -95,8 +95,9 @@ export default function AdminActionBar({ courseId, currentStatus }: AdminActionB
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/90 text-white p-4 border-t border-slate-700/50 backdrop-blur-md flex flex-col md:flex-row justify-between items-center gap-4 font-sans">
-        <div className="flex items-center gap-3">
+      {status === 'PENDING_REVIEW' && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/90 text-white p-4 border-t border-slate-700/50 backdrop-blur-md flex flex-col md:flex-row justify-between items-center gap-4 font-sans">
+          <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center">
             <AlertTriangle size={20} />
           </div>
@@ -126,6 +127,7 @@ export default function AdminActionBar({ courseId, currentStatus }: AdminActionB
           </button>
         </div>
       </div>
+      )}
 
       {showRejectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 font-sans">

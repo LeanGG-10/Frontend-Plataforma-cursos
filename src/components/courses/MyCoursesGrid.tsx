@@ -16,23 +16,32 @@ export const MyCoursesGrid: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const fetchCourses = async (pageNum: number = 1, append: boolean = false) => {
+    try {
+      const response = await coursesService.getMyCourses(pageNum);
+      if (append) {
+        setCourses(prev => [...prev, ...response.data]);
+      } else {
+        setCourses(response.data);
+      }
+      setTotalPages(response.totalPages || 1);
+      setPage(response.page || 1);
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar los cursos');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const data = await coursesService.getMyCourses();
-        setCourses(data);
-      } catch (err: any) {
-        setError(err.message || 'Error al cargar los cursos');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCourses();
+    fetchCourses(1, false);
   }, []);
 
   if (loading) {
-    return <div className="py-32 text-center text-primary/60 font-body">Cargando tus cursos...</div>;
+    return <div className="py-32 text-center text-primary/90 font-semibold font-body">Cargando tus cursos...</div>;
   }
 
   if (error) {
@@ -46,6 +55,7 @@ export const MyCoursesGrid: React.FC = () => {
   }
 
   return (
+    <>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
       <a
         href="/cursos/crear"
@@ -56,7 +66,7 @@ export const MyCoursesGrid: React.FC = () => {
         </div>
         <div className="text-center">
           <span className="block text-lg font-display font-bold text-primary italic">Crear Curso</span>
-          <span className="text-xs font-body text-primary/40 uppercase tracking-widest mt-1">Nuevo programa</span>
+          <span className="text-xs font-body text-primary/90 font-semibold uppercase tracking-widest mt-1">Nuevo programa</span>
         </div>
       </a>
       {courses.map((course) => (
@@ -97,7 +107,6 @@ export const MyCoursesGrid: React.FC = () => {
               {course.description}
             </p>
           </div>
-          
           <div className="pt-6 flex justify-between items-center border-t border-[#C9A44A]/10 mt-4">
             <div className="flex items-center gap-2 text-xs font-bold text-[#0F172A]/70 uppercase tracking-wider">
               <Users size={14} />
@@ -116,9 +125,21 @@ export const MyCoursesGrid: React.FC = () => {
 
       {courses.length === 0 && (
         <div className="col-span-full py-20 text-center">
-          <p className="text-primary/60 font-body">Aún no has creado ningún curso.</p>
+          <p className="text-primary/90 font-semibold font-body">Aún no has creado ningún curso.</p>
         </div>
       )}
-    </div>
+      </div>
+
+      {!error && page < totalPages && (
+        <div className="mt-12 flex justify-center animate-in fade-in duration-500">
+          <button 
+            onClick={() => fetchCourses(page + 1, true)}
+            className="px-8 py-3 bg-secondary text-primary font-bold text-xs uppercase tracking-widest rounded-[12px] hover:bg-white hover:text-primary transition-all cursor-pointer shadow-lg"
+          >
+            Cargar más
+          </button>
+        </div>
+      )}
+    </>
   );
 };

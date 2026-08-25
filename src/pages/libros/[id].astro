@@ -6,7 +6,7 @@ import { formatPrice } from '../../utils/format';
 import PayPalPaymentButton from '../../components/PayPalPaymentButton.astro';
 
 const { id } = Astro.params;
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.PUBLIC_API_URL ;
 
 let book = null;
 
@@ -29,7 +29,7 @@ try {
   };
 
 } catch (error) {
-  console.error('[SSR Error] Failed to fetch book:', error);
+  void 0; /* error log removed */ // ('[SSR Error] Failed to fetch book:', error);
   return Astro.redirect('/404');
 }
 
@@ -42,12 +42,12 @@ if (!book) return Astro.redirect('/404');
   <main class="pt-[72px] min-h-screen bg-[#F7F2E8]">
     <div class="container mx-auto px-6 py-12 md:py-24">
       <!-- Breadcrumbs -->
-      <nav class="flex mb-12 text-[10px] uppercase tracking-[0.3em] text-primary/40 font-bold">
+      <nav class="flex mb-12 text-[10px] uppercase tracking-[0.3em] text-primary/90 font-bold">
         <a href="/" class="hover:text-secondary transition-colors cursor-pointer">Inicio</a>
         <span class="mx-4">/</span>
         <a href="/libros" class="hover:text-secondary transition-colors cursor-pointer">Biblioteca</a>
         <span class="mx-4 text-secondary">/</span>
-        <span class="text-primary/60">{book.title}</span>
+        <span class="text-primary/90 font-semibold">{book.title}</span>
       </nav>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
@@ -73,7 +73,7 @@ if (!book) return Astro.redirect('/404');
             <h1 class="text-5xl md:text-6xl xl:text-7xl font-display text-primary font-bold leading-[1.1]">
               {book.title}
             </h1>
-            <p class="text-primary/60 font-body text-xl font-light leading-relaxed max-w-2xl border-l-2 border-secondary/30 pl-8 py-2">
+            <p class="text-primary/90 font-semibold font-body text-xl font-light leading-relaxed max-w-2xl border-l-2 border-secondary/30 pl-8 py-2">
               {book.description}
             </p>
           </header>
@@ -110,7 +110,7 @@ if (!book) return Astro.redirect('/404');
                  <span class="text-5xl font-display font-bold text-primary">
                    {formatPrice(book.price)}
                  </span>
-                 <span class="text-xs text-primary/40 font-body">Format: PDF</span>
+                 <span class="text-xs text-primary/90 font-semibold font-body">Format: PDF</span>
                </div>
             </div>
 

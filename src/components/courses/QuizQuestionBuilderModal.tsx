@@ -16,9 +16,14 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
   
   const [editingQuestion, setEditingQuestion] = useState<QuizQuestion | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchQuestions();
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = 'unset'; };
   }, [sectionId, lessonId]);
 
   const fetchQuestions = async () => {
@@ -48,13 +53,17 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
     setEditingQuestion(JSON.parse(JSON.stringify(q)));
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Seguro que deseas eliminar esta pregunta?')) return;
+  const performDelete = async () => {
+    if (!questionToDelete) return;
+    setIsDeleting(true);
     try {
-      await coursesService.deleteQuizQuestion(sectionId, lessonId, id);
-      setQuestions(questions.filter(q => q.id !== id));
+      await coursesService.deleteQuizQuestion(sectionId, lessonId, questionToDelete);
+      setQuestions(questions.filter(q => q.id !== questionToDelete));
+      setQuestionToDelete(null);
     } catch (err: any) {
       alert(err.message || 'Error al eliminar');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -136,21 +145,21 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-4xl my-8 flex flex-col border border-slate-200 dark:border-slate-700 h-[90vh]">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200 overflow-hidden">
+      <div className="bg-stone-50 dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-4xl flex flex-col border border-slate-200 dark:border-slate-700 h-full max-h-full">
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/80 shrink-0 rounded-t-2xl">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-transparent dark:bg-slate-800/80 shrink-0 rounded-t-2xl">
           <h3 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             Gestionar Preguntas del Quiz
           </h3>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-white dark:bg-slate-700 rounded-full shadow-sm transition-colors">
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-white dark:bg-slate-700 rounded-full shadow-sm transition-colors cursor-pointer">
             <X size={20} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 dark:bg-slate-900/20">
+        <div className="flex-1 overflow-y-auto p-6 bg-transparent dark:bg-slate-900/20">
           {error && (
             <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl flex items-start gap-3 border border-red-200 dark:border-red-800">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -186,7 +195,7 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
                     </label>
                     <button 
                       onClick={handleAddOption}
-                      className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1"
+                      className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
                     >
                       <Plus size={14} /> Añadir Opción
                     </button>
@@ -242,14 +251,14 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
                 <button
                   onClick={() => setEditingQuestion(null)}
                   disabled={isSubmitting}
-                  className="px-4 py-2 font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                  className="px-4 py-2 font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleSaveQuestion}
                   disabled={isSubmitting}
-                  className="px-6 py-2 font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors flex items-center gap-2"
+                  className="px-6 py-2 font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors flex items-center gap-2 cursor-pointer"
                 >
                   {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                   Guardar Pregunta
@@ -265,7 +274,7 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
                 </div>
                 <button
                   onClick={handleAddNew}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm cursor-pointer"
                 >
                   <Plus size={18} /> Nueva Pregunta
                 </button>
@@ -280,7 +289,7 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
                   <p className="text-slate-500 text-sm max-w-sm mx-auto mb-6">Esta evaluación aún no tiene preguntas. Comienza añadiendo la primera pregunta de opción múltiple.</p>
                   <button
                     onClick={handleAddNew}
-                    className="px-6 py-2.5 bg-white dark:bg-slate-700 border-2 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 font-semibold rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                    className="px-6 py-2.5 bg-white dark:bg-slate-700 border-2 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 font-semibold rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors cursor-pointer"
                   >
                     Crear primera pregunta
                   </button>
@@ -316,14 +325,14 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
                       <div className="flex flex-col gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => handleEdit(q)}
-                          className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                          className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors cursor-pointer"
                           title="Editar pregunta"
                         >
                           <Edit2 size={18} />
                         </button>
                         <button 
-                          onClick={() => q.id && handleDelete(q.id)}
-                          className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                          onClick={() => q.id && setQuestionToDelete(q.id)}
+                          className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors cursor-pointer"
                           title="Eliminar pregunta"
                         >
                           <Trash2 size={18} />
@@ -331,12 +340,70 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
                       </div>
                     </div>
                   ))}
+                  <div className="mt-6 flex justify-end border-t border-slate-200 dark:border-slate-700 pt-6">
+                    <button
+                      onClick={() => setShowSuccessModal(true)}
+                      className="px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors cursor-pointer flex items-center gap-2 shadow-sm"
+                    >
+                      <Save size={18} />
+                      Guardar Preguntas
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           )}
         </div>
       </div>
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-sm flex flex-col items-center text-center border border-slate-200 dark:border-slate-700">
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 text-green-500 flex items-center justify-center mb-4">
+              <CheckCircle size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">¡Éxito!</h3>
+            <p className="text-slate-500 mb-6">Preguntas guardadas correctamente.</p>
+            <button
+              onClick={() => {
+                setShowSuccessModal(false);
+                onClose();
+              }}
+              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors cursor-pointer"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {questionToDelete && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-sm flex flex-col items-center text-center border border-slate-200 dark:border-slate-700">
+            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/20 text-red-500 flex items-center justify-center mb-4">
+              <AlertCircle size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">¿Eliminar pregunta?</h3>
+            <p className="text-slate-500 mb-6">Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={() => setQuestionToDelete(null)}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={performDelete}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
+              >
+                {isDeleting ? <Loader2 size={18} className="animate-spin" /> : 'Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
