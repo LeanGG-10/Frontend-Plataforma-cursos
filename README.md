@@ -1,6 +1,6 @@
 # Élite Educativa Frontend Web App
 
-Aplicación del lado del cliente (Frontend) para la plataforma de venta y consumo de cursos y libros. Está diseñada como una interfaz de usuario híbrida que consume la API del backend para manejar usuarios, compras y acceso al material.
+desarrollo Aplicación del lado del cliente (Frontend) para la plataforma de venta y consumo de cursos y libros. Está diseñada como una interfaz de usuario híbrida que consume la API del backend para manejar usuarios, compras y acceso al material.
 
 ## 2. Stack tecnológico
 
