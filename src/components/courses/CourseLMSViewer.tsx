@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { coursesService } from '../../services/courses.service';
+import { coursesService, type CourseProgressData } from '../../services/courses.service';
 import { authService } from '../../services/auth.service';
-import { Loader2, PlayCircle, FileText, ClipboardList, BookOpen, AlertCircle, ChevronLeft, Menu, X, Trophy, ExternalLink, Package, Download, ChevronRight, ChevronDown } from 'lucide-react';
+import { Loader2, PlayCircle, FileText, ClipboardList, BookOpen, AlertCircle, ChevronLeft, Menu, X, Trophy, ExternalLink, Package, Download, ChevronRight, ChevronDown, Check, CheckCircle2 } from 'lucide-react';
 import StudentAssignmentView from './StudentAssignmentView';
 import StudentQuizView from './StudentQuizView';
 
@@ -39,6 +39,7 @@ interface Lesson {
   is_final_exam?: boolean;
   quiz_time_limit_minutes?: number;
   passing_score_percentage?: number;
+  max_attempts?: number;
 }
 
 interface Section {
@@ -56,7 +57,15 @@ interface CourseModule {
   sections: Section[];
 }
 
-function LessonFeedItem({ sectionId, lesson }: { sectionId: string; lesson: Lesson }) {
+function LessonFeedItem({ 
+  sectionId, 
+  lesson,
+  onQuizCompleted,
+}: { 
+  sectionId: string; 
+  lesson: Lesson;
+  onQuizCompleted?: () => void;
+}) {
   const [lessonUrl, setLessonUrl] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
@@ -94,6 +103,8 @@ function LessonFeedItem({ sectionId, lesson }: { sectionId: string; lesson: Less
         isFinalExam={lesson.is_final_exam}
         timeLimitMinutes={lesson.quiz_time_limit_minutes}
         passingScore={lesson.passing_score_percentage}
+        maxAttempts={lesson.max_attempts}
+        onQuizCompleted={onQuizCompleted}
       />
     );
   }
@@ -140,7 +151,7 @@ function LessonFeedItem({ sectionId, lesson }: { sectionId: string; lesson: Less
                     : <>Este es un archivo de proyecto (.elp). Para ejecutar o visualizar este archivo, debes tener <strong>eXeLearning</strong> instalado en tu computadora.</>}
                 </p>
                 <a 
-                  href={downloadUrl || lessonUrl} 
+                  href={downloadUrl || lessonUrl || undefined} 
                   target="_blank" 
                   rel="noreferrer"
                   className="px-6 py-3 bg-secondary hover:bg-[#b08d3c] text-white rounded-xl font-medium transition-colors shadow-lg flex items-center gap-2 border border-secondary/50 cursor-pointer"
@@ -176,7 +187,7 @@ function LessonFeedItem({ sectionId, lesson }: { sectionId: string; lesson: Less
                     <FileText className="w-16 h-16 text-primary/90 font-semibold mb-4" />
                     <p className="text-primary/90 font-semibold mb-4">Tu navegador no soporta la visualización de PDFs incrustados.</p>
                     <a 
-                      href={downloadUrl || lessonUrl} 
+                      href={downloadUrl || lessonUrl || undefined} 
                       target="_blank" 
                       rel="noreferrer"
                       className="px-6 py-2 bg-secondary hover:bg-[#b08d3c] text-white rounded-lg font-medium transition-colors cursor-pointer"
@@ -194,7 +205,7 @@ function LessonFeedItem({ sectionId, lesson }: { sectionId: string; lesson: Less
               )}
               <div className="absolute top-4 right-4 z-20">
                 <a 
-                  href={downloadUrl || lessonUrl} 
+                  href={lessonUrl || downloadUrl || undefined} 
                   target="_blank" 
                   rel="noreferrer"
                   className="px-4 py-2 bg-white/80 hover:bg-white backdrop-blur-md text-primary text-sm rounded-lg font-bold transition-colors shadow-lg flex items-center gap-2 border border-white/50 cursor-pointer"
@@ -208,7 +219,7 @@ function LessonFeedItem({ sectionId, lesson }: { sectionId: string; lesson: Less
               <FileText className="w-16 h-16 text-primary/90 font-semibold mb-4" />
               <h3 className="text-xl font-bold text-primary mb-2">Contenido disponible</h3>
               <a 
-                href={lessonUrl} 
+                href={lessonUrl || undefined} 
                 target="_blank" 
                 rel="noreferrer"
                 className="px-6 py-2.5 bg-secondary hover:bg-[#b08d3c] text-white rounded-xl font-medium transition-colors cursor-pointer"
@@ -238,6 +249,11 @@ export default function CourseLMSViewer({ courseId }: { courseId: string }) {
   const [courseTitle, setCourseTitle] = useState('');
   const [modules, setModules] = useState<CourseModule[]>([]);
   
+  // Progress State
+  const [progress, setProgress] = useState<CourseProgressData | null>(null);
+  const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(new Set());
+  const [completingLessonId, setCompletingLessonId] = useState<string | null>(null);
+
   // Navigation State
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
@@ -270,6 +286,17 @@ export default function CourseLMSViewer({ courseId }: { courseId: string }) {
 
         const data = await coursesService.getPublicCourseDetails(courseId);
         setCourseTitle(data.title);
+
+        // Fetch student course progress
+        try {
+          const progressData = await coursesService.getCourseProgress(courseId);
+          setProgress(progressData);
+          if (progressData.completed_lesson_ids) {
+            setCompletedLessonIds(new Set(progressData.completed_lesson_ids));
+          }
+        } catch (progErr) {
+          console.warn('No se pudo cargar el progreso inicial:', progErr);
+        }
         
         // Use modules if available, else wrap sections in a default module
         let rawModules: any[] = data.modules || [];
@@ -313,6 +340,44 @@ export default function CourseLMSViewer({ courseId }: { courseId: string }) {
 
     checkAccessAndLoad();
   }, [courseId]);
+
+  const handleCompleteLesson = async (lessonId: string) => {
+    if (completingLessonId) return;
+    setCompletingLessonId(lessonId);
+    try {
+      await coursesService.completeLesson(lessonId);
+      
+      // Update local set of completed lessons for immediate UI reactivity
+      setCompletedLessonIds(prev => {
+        const next = new Set(prev);
+        next.add(lessonId);
+        return next;
+      });
+
+      // Synchronize with backend progress data
+      const updatedProgress = await coursesService.getCourseProgress(courseId);
+      setProgress(updatedProgress);
+    } catch (err: any) {
+      console.error('Error al marcar lección como completada:', err);
+      alert(err.message || 'Error al guardar el progreso de la lección');
+    } finally {
+      setCompletingLessonId(null);
+    }
+  };
+
+  const handleQuizPassed = async (lessonId: string) => {
+    setCompletedLessonIds(prev => {
+      const next = new Set(prev);
+      next.add(lessonId);
+      return next;
+    });
+    try {
+      const updatedProgress = await coursesService.getCourseProgress(courseId);
+      setProgress(updatedProgress);
+    } catch (err) {
+      console.warn('Error al actualizar progreso tras aprobar evaluación:', err);
+    }
+  };
 
   const toggleModule = (modId: string) => setExpandedModules(prev => ({ ...prev, [modId]: !prev[modId] }));
   const toggleSection = (secId: string) => setExpandedSections(prev => ({ ...prev, [secId]: !prev[secId] }));
@@ -403,18 +468,41 @@ export default function CourseLMSViewer({ courseId }: { courseId: string }) {
     }
   };
 
+  const currentProgressPercent = progress
+    ? Math.min(100, Math.max(0, Number(progress.percentage_completed ?? progress.percentage ?? 0) || 0))
+    : 0;
+
   return (
     <div className="flex h-full w-full bg-[#fcfbf9]">
       {/* Sidebar */}
       <div 
         className={`${sidebarOpen ? 'w-80' : 'w-0'} shrink-0 bg-white/60 backdrop-blur-md border-r border-white/40 transition-all duration-300 overflow-hidden flex flex-col h-full`}
       >
-        <div className="p-4 border-b border-white/40 flex items-center gap-3">
+        <div className="p-4 border-b border-white/40 flex items-center gap-3 shrink-0">
           <a href={`/cursos/${courseId}`} className="p-2 bg-primary/5 hover:bg-primary/10 text-primary/90 font-semibold rounded-lg transition-colors cursor-pointer">
             <ChevronLeft size={20} />
           </a>
           <h2 className="font-bold text-primary text-sm line-clamp-2 leading-tight">{courseTitle}</h2>
         </div>
+
+        {/* Course Progress Widget */}
+        {progress && (
+          <div className="p-4 bg-white/40 border-b border-white/40 space-y-2 shrink-0">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-primary/70">Progreso del curso</span>
+              <span className="font-bold text-secondary">{Math.round(currentProgressPercent)}%</span>
+            </div>
+            <div className="w-full bg-primary/10 rounded-full h-2 overflow-hidden">
+              <div 
+                className="bg-secondary h-2 rounded-full transition-all duration-500 ease-out" 
+                style={{ width: `${currentProgressPercent}%` }}
+              />
+            </div>
+            <div className="text-[11px] text-primary/60 font-medium">
+              {progress.completed_lessons} de {progress.total_lessons} lecciones completadas
+            </div>
+          </div>
+        )}
         
         <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
           {modules.map((mod, mIdx) => (
@@ -453,22 +541,32 @@ export default function CourseLMSViewer({ courseId }: { courseId: string }) {
 
                         {expandedSections[section.id] && (
                           <div className="pl-3 space-y-1 mt-1 border-l border-primary/10 ml-1">
-                            {section.lessons.map((lesson) => (
-                              <button
-                                key={lesson.id}
-                                onClick={() => handleLessonClick(mod.id, section.id, lesson.id)}
-                                className={`cursor-pointer w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 transition-colors ${
-                                  isSecActive 
-                                    ? 'hover:bg-white/80 text-primary/80 font-medium' 
-                                    : 'text-primary/90 font-semibold hover:bg-white/50'
-                                }`}
-                              >
-                                <span className={isSecActive ? 'text-secondary/90' : 'text-primary/90 font-semibold'}>
-                                  {getIconForType(lesson.content_type)}
-                                </span>
-                                <span className="text-sm truncate flex-1">{lesson.title}</span>
-                              </button>
-                            ))}
+                            {section.lessons.map((lesson) => {
+                              const isLessonCompleted = completedLessonIds.has(lesson.id);
+                              return (
+                                <button
+                                  key={lesson.id}
+                                  onClick={() => handleLessonClick(mod.id, section.id, lesson.id)}
+                                  className={`cursor-pointer w-full text-left px-3 py-2 rounded-lg flex items-center gap-2.5 transition-colors ${
+                                    isSecActive 
+                                      ? 'hover:bg-white/80 text-primary/80 font-medium' 
+                                      : 'text-primary/90 font-semibold hover:bg-white/50'
+                                  }`}
+                                >
+                                  <span className={isLessonCompleted ? 'text-emerald-600 shrink-0' : isSecActive ? 'text-secondary/90 shrink-0' : 'text-primary/70 shrink-0'}>
+                                    {isLessonCompleted ? <CheckCircle2 size={16} /> : getIconForType(lesson.content_type)}
+                                  </span>
+                                  <span className={`text-sm truncate flex-1 ${isLessonCompleted ? 'text-primary/90 font-medium' : ''}`}>
+                                    {lesson.title}
+                                  </span>
+                                  {isLessonCompleted && (
+                                    <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                                      Listo
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
@@ -503,7 +601,21 @@ export default function CourseLMSViewer({ courseId }: { courseId: string }) {
               <h1 className="font-bold text-lg text-primary">Selecciona una sección</h1>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {progress && (
+              <div className="hidden md:flex items-center gap-3 bg-white/60 border border-white/50 px-3 py-1.5 rounded-xl shadow-xs">
+                <div className="flex flex-col text-right">
+                  <span className="text-[10px] font-bold text-primary/60 uppercase tracking-wider">Tu avance</span>
+                  <span className="text-xs font-extrabold text-primary">{Math.round(currentProgressPercent)}%</span>
+                </div>
+                <div className="w-20 bg-primary/10 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-secondary h-2 rounded-full transition-all duration-500 ease-out" 
+                    style={{ width: `${currentProgressPercent}%` }}
+                  />
+                </div>
+              </div>
+            )}
             <button 
               onClick={goPrevSection}
               disabled={currentSectionIndex <= 0}
@@ -527,17 +639,87 @@ export default function CourseLMSViewer({ courseId }: { courseId: string }) {
         <main className="flex-1 overflow-y-auto bg-transparent p-4 md:p-8 custom-scrollbar scroll-smooth">
           <div className="max-w-5xl mx-auto flex flex-col gap-12 pb-24">
             {activeSectionData ? (
-              activeSectionData.lessons.map((lesson: any, idx: number) => (
-                <div key={lesson.id} id={`lesson-${lesson.id}`} className="flex flex-col gap-4 scroll-mt-24">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 rounded-full bg-white text-secondary flex items-center justify-center font-bold text-sm shrink-0 border border-white/50 shadow-sm">
-                      {idx + 1}
+              activeSectionData.lessons.map((lesson: any, idx: number) => {
+                const isCompleted = completedLessonIds.has(lesson.id);
+                const isCompleting = completingLessonId === lesson.id;
+
+                return (
+                  <div key={lesson.id} id={`lesson-${lesson.id}`} className="flex flex-col gap-4 scroll-mt-24 bg-white/40 border border-white/60 p-6 md:p-8 rounded-3xl shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-primary/5">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 border transition-colors ${
+                          isCompleted 
+                            ? 'bg-emerald-500 text-white border-emerald-400 shadow-sm' 
+                            : 'bg-white text-secondary border-white/50 shadow-xs'
+                        }`}>
+                          {isCompleted ? <Check size={18} strokeWidth={2.5} /> : idx + 1}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold tracking-wider text-secondary uppercase">
+                              {lesson.content_type === 'VIDEO' ? 'Video' :
+                               lesson.content_type === 'DOCUMENT' ? 'Documento' :
+                               lesson.content_type === 'ASSIGNMENT' ? 'Tarea' :
+                               lesson.content_type === 'QUIZ' ? 'Cuestionario' :
+                               lesson.content_type === 'EXE_LEARNING' ? 'eXeLearning' : 'Lección'}
+                            </span>
+                            {isCompleted && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+                                <CheckCircle2 size={12} /> Completada
+                              </span>
+                            )}
+                          </div>
+                          <h2 className="text-xl md:text-2xl font-bold text-primary leading-snug">{lesson.title}</h2>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+                        {lesson.content_type === 'QUIZ' ? (
+                          isCompleted && (
+                            <span className="px-3.5 py-1.5 rounded-xl text-sm font-semibold flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
+                              <CheckCircle2 size={16} className="text-emerald-600" />
+                              <span>Completada</span>
+                            </span>
+                          )
+                        ) : (
+                          <button
+                            onClick={() => handleCompleteLesson(lesson.id)}
+                            disabled={isCompleting || isCompleted}
+                            className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all ${
+                              isCompleted
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default shadow-xs'
+                                : 'bg-secondary hover:bg-[#b08d3c] text-white shadow-md hover:shadow-lg cursor-pointer disabled:opacity-60 active:scale-95'
+                            }`}
+                          >
+                            {isCompleting ? (
+                              <>
+                                <Loader2 size={16} className="animate-spin text-white" />
+                                <span>Guardando...</span>
+                              </>
+                            ) : isCompleted ? (
+                              <>
+                                <CheckCircle2 size={16} className="text-emerald-600" />
+                                <span>Completada</span>
+                              </>
+                            ) : (
+                              <>
+                                <Check size={16} />
+                                <span>Marcar como completa</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <h2 className="text-2xl font-bold text-primary">{lesson.title}</h2>
+
+                    <LessonFeedItem 
+                      sectionId={activeSectionData.id} 
+                      lesson={lesson} 
+                      onQuizCompleted={() => handleQuizPassed(lesson.id)} 
+                    />
                   </div>
-                  <LessonFeedItem sectionId={activeSectionData.id} lesson={lesson} />
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center mt-20">
                 <BookOpen className="w-20 h-20 text-primary/20 mb-6" />
