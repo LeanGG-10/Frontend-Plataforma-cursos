@@ -11,6 +11,7 @@ export interface QuizQuestion {
   question_text: string;
   explanation?: string;
   position?: number;
+  show_solution_early?: boolean;
   options: QuizOption[];
 }
 
@@ -32,6 +33,26 @@ export interface CreateCoursePayload {
 }
 
 export interface UpdateCoursePayload extends Partial<CreateCoursePayload> {}
+
+export interface CourseProgressData {
+  course_id: string;
+  total_lessons: number;
+  completed_lessons: number;
+  percentage?: number;
+  percentage_completed?: number;
+  completed_lesson_ids: string[];
+}
+
+export interface CompleteLessonResponse {
+  success: boolean;
+  message: string;
+  progress: {
+    id: string;
+    profile_id: string;
+    lesson_id: string;
+    completed_at: string;
+  };
+}
 
 class CoursesService {
   private getAuthHeaders(isMultipart = false) {
@@ -491,6 +512,50 @@ class CoursesService {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.message || 'Error al obtener los intentos del quiz');
     }
+    return response.json();
+  }
+
+  async getQuizReview(sectionId: string, lessonId: string) {
+    const response = await fetch(`${API_URL}/sections/${sectionId}/lessons/${lessonId}/quiz/review`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al obtener la revisión del quiz');
+    }
+    return response.json();
+  }
+
+  // ==========================================
+  // PROGRESO DE LECCIONES
+  // ==========================================
+
+  async completeLesson(lessonId: string): Promise<CompleteLessonResponse> {
+    const response = await fetch(`${API_URL}/lessons/${lessonId}/complete`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al marcar la lección como completada');
+    }
+
+    return response.json();
+  }
+
+  async getCourseProgress(courseId: string): Promise<CourseProgressData> {
+    const response = await fetch(`${API_URL}/courses/${courseId}/progress`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al obtener el progreso del curso');
+    }
+
     return response.json();
   }
 

@@ -17,6 +17,7 @@ interface Lesson {
  quiz_time_limit_minutes?: number;
  passing_score_percentage?: number;
  is_final_exam?: boolean;
+ max_attempts?: number;
 }
 
 interface Props {
@@ -41,6 +42,7 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
  quiz_time_limit_minutes: lesson?.quiz_time_limit_minutes ?? 15,
  passing_score_percentage: lesson?.passing_score_percentage ?? 70.0,
  is_final_exam: lesson?.is_final_exam ?? false,
+ max_attempts: lesson?.max_attempts ?? 3,
  });
 
  const [file, setFile] = useState<File | null>(null);
@@ -113,6 +115,7 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
  quiz_time_limit_minutes: formData.content_type === 'QUIZ' ? Number(formData.quiz_time_limit_minutes) : null,
  passing_score_percentage: formData.content_type === 'QUIZ' ? Number(formData.passing_score_percentage) : null,
  is_final_exam: formData.content_type === 'QUIZ' ? formData.is_final_exam : false,
+ max_attempts: formData.content_type === 'QUIZ' ? Number(formData.max_attempts ?? 3) : 3,
  });
  }
 
@@ -270,7 +273,7 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
  {/* Quiz specific fields */}
  {formData.content_type === 'QUIZ' && (
  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-4">
- <div className="grid grid-cols-2 gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
  <div>
  <label className="block text-sm font-medium text-slate-700 mb-1">
  Límite de tiempo (Minutos)
@@ -293,6 +296,19 @@ export default function LessonEditorModal({ courseId, sectionId, lesson, onClose
  max="100"
  value={formData.passing_score_percentage}
  onChange={(e) => setFormData({ ...formData, passing_score_percentage: parseFloat(e.target.value) || 70.0 })}
+ className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+ />
+ </div>
+ <div>
+ <label className="block text-sm font-medium text-slate-700 mb-1">
+ Intentos Máximos
+ </label>
+ <input
+ type="number"
+ min="1"
+ max="10"
+ value={formData.max_attempts}
+ onChange={(e) => setFormData({ ...formData, max_attempts: parseInt(e.target.value) || 1 })}
  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
  />
  </div>

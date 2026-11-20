@@ -42,6 +42,7 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
     setEditingQuestion({
       question_text: '',
       explanation: '',
+      show_solution_early: true,
       options: [
         { option_text: '', is_correct: true },
         { option_text: '', is_correct: false },
@@ -50,7 +51,10 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
   };
 
   const handleEdit = (q: QuizQuestion) => {
-    setEditingQuestion(JSON.parse(JSON.stringify(q)));
+    setEditingQuestion({
+      ...JSON.parse(JSON.stringify(q)),
+      show_solution_early: q.show_solution_early ?? true,
+    });
   };
 
   const performDelete = async () => {
@@ -246,6 +250,26 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all resize-none"
                   />
                 </div>
+
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/40 flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-slate-800 dark:text-slate-200 cursor-pointer">
+                      Mostrar respuesta correcta y retroalimentación antes del último intento
+                    </label>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Activado por defecto. Si se desmarca, el alumno solo verá la solución y explicación cuando haya completado su último intento disponible o haya aprobado la evaluación.
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={editingQuestion.show_solution_early ?? true}
+                      onChange={(e) => setEditingQuestion({ ...editingQuestion, show_solution_early: e.target.checked })}
+                    />
+                    <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 dark:bg-slate-700"></div>
+                  </label>
+                </div>
               </div>
               <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
                 <button
@@ -319,6 +343,13 @@ export default function QuizQuestionBuilderModal({ sectionId, lessonId, onClose 
                         {q.explanation && (
                           <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 rounded-xl text-sm text-blue-800 dark:text-blue-300">
                             <strong>Pista/Explicación:</strong> {q.explanation}
+                          </div>
+                        )}
+                        {q.show_solution_early === false && (
+                          <div className="mt-2">
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800/50">
+                              🔒 Respuesta oculta hasta el último intento
+                            </span>
                           </div>
                         )}
                       </div>

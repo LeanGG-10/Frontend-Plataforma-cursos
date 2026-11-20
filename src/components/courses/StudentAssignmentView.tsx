@@ -203,7 +203,7 @@ export default function StudentAssignmentView({ sectionId, lessonId, title }: St
           </p>
           <button
             onClick={handleStart}
-            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-primary font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20"
+            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-primary font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20 cursor-pointer"
           >
             Iniciar Actividad
           </button>

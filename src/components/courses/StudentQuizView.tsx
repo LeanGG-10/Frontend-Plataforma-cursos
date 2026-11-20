@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { coursesService, type QuizQuestion } from '../../services/courses.service';
-import { Loader2, PlayCircle, CheckCircle2, XCircle, AlertCircle, Clock, Trophy, ChevronRight } from 'lucide-react';
+import { Loader2, PlayCircle, CheckCircle2, XCircle, AlertCircle, Clock, Trophy, ChevronRight, ClipboardList } from 'lucide-react';
 
 interface StudentQuizViewProps {
   sectionId: string;
@@ -9,6 +9,8 @@ interface StudentQuizViewProps {
   isFinalExam?: boolean;
   timeLimitMinutes?: number;
   passingScore?: number;
+  maxAttempts?: number;
+  onQuizCompleted?: () => void;
 }
 
 export default function StudentQuizView({ 
@@ -17,9 +19,13 @@ export default function StudentQuizView({
   title, 
   isFinalExam = false,
   timeLimitMinutes = 0,
-  passingScore = 60 
+  passingScore = 60,
+  maxAttempts = 3,
+  onQuizCompleted,
 }: StudentQuizViewProps) {
   const [phase, setPhase] = useState<'WELCOME' | 'RESOLUTION' | 'RESULTS' | 'REVIEW'>('WELCOME');
+  const [reviewSourcePhase, setReviewSourcePhase] = useState<'WELCOME' | 'RESULTS'>('RESULTS');
+  const [loadingReview, setLoadingReview] = useState(false);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [attempts, setAttempts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,6 +175,24 @@ export default function StudentQuizView({
     }
   };
 
+  const handleOpenReview = async (source: 'WELCOME' | 'RESULTS' = 'RESULTS') => {
+    setReviewSourcePhase(source);
+    if (resultData?.questionsResult) {
+      setPhase('REVIEW');
+      return;
+    }
+    setLoadingReview(true);
+    try {
+      const data = await coursesService.getQuizReview(sectionId, lessonId);
+      setResultData(data);
+      setPhase('REVIEW');
+    } catch (err: any) {
+      alert(err.message || 'No se pudo cargar la revisión del quiz.');
+    } finally {
+      setLoadingReview(false);
+    }
+  };
+
   const submitQuiz = async (overrideAnswers?: Record<string, string>) => {
     const finalAnswers = overrideAnswers || answers;
     setSubmitting(true);
@@ -177,12 +201,18 @@ export default function StudentQuizView({
       setResultData(res);
       setPhase('RESULTS');
       localStorage.removeItem(`quiz_progress_${lessonId}`);
+      
+      // Si alcanzó el porcentaje de aprobado, marcar automáticamente como completada
+      if (res.passed) {
+        onQuizCompleted?.();
+      }
+
       // Refresh attempts history
       const atts = await coursesService.getQuizAttempts(sectionId, lessonId);
       setAttempts(atts);
-    } catch (error) {
-      void 0; /* error log removed */ // ('Error submitting quiz:', error);
-      alert('Hubo un error al enviar el quiz. Inténtalo de nuevo.');
+    } catch (error: any) {
+      void 0; /* error log removed */
+      alert(error.message || 'Hubo un error al enviar el quiz. Inténtalo de nuevo.');
     } finally {
       setSubmitting(false);
     }
@@ -242,23 +272,59 @@ export default function StudentQuizView({
               <div className="text-xl font-bold text-primary">{passingScore}%</div>
             </div>
 
+            <div className="flex-1 min-w-[140px] bg-white/50 rounded-2xl p-6 border border-white/40">
+              <ClipboardList className="w-8 h-8 text-indigo-500 mx-auto mb-3" />
+              <div className="text-sm font-medium text-primary/90 font-semibold mb-1">Intentos</div>
+              <div className="text-xl font-bold text-primary">{attempts.length} / {maxAttempts}</div>
+            </div>
+
             {bestScore !== null && (
               <div className="flex-1 min-w-[140px] bg-white/50 rounded-2xl p-6 border border-white/40">
-                <Trophy className="w-8 h-8 text-indigo-500 mx-auto mb-3" />
+                <Trophy className="w-8 h-8 text-amber-500 mx-auto mb-3" />
                 <div className="text-sm font-medium text-primary/90 font-semibold mb-1">Mejor Nota</div>
                 <div className="text-xl font-bold text-primary">{bestScore.toFixed(0)}%</div>
               </div>
             )}
           </div>
 
-          <button
-            onClick={startQuiz}
-            className="group relative px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-primary rounded-2xl font-bold text-lg shadow-xl shadow-indigo-900/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-3 overflow-hidden cursor-pointer"
-          >
-            <span className="relative z-10">Comenzar Evaluación</span>
-            <PlayCircle size={24} className="relative z-10 group-hover:translate-x-1 transition-transform" />
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </button>
+          {attempts.length >= maxAttempts ? (
+            <div className="flex flex-col items-center gap-4 max-w-lg mb-4 w-full">
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 rounded-2xl border border-amber-200 dark:border-amber-800 w-full text-center">
+                <p className="font-semibold text-base mb-1">Límite de intentos alcanzado</p>
+                <p className="text-sm">Has realizado todos los intentos permitidos ({attempts.length} de {maxAttempts}) para esta evaluación.</p>
+              </div>
+              <button
+                onClick={() => handleOpenReview('WELCOME')}
+                disabled={loadingReview}
+                className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-base transition-all shadow-lg shadow-indigo-900/20 flex items-center gap-2 cursor-pointer disabled:opacity-60"
+              >
+                {loadingReview ? <Loader2 size={18} className="animate-spin" /> : <ClipboardList size={18} />}
+                Revisar Preguntas
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                onClick={startQuiz}
+                className="group relative px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-lg shadow-xl shadow-indigo-900/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-3 overflow-hidden cursor-pointer"
+              >
+                <span className="relative z-10">{attempts.length > 0 ? 'Volver a Intentar' : 'Comenzar Evaluación'}</span>
+                <PlayCircle size={24} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+
+              {attempts.length > 0 && (
+                <button
+                  onClick={() => handleOpenReview('WELCOME')}
+                  disabled={loadingReview}
+                  className="px-6 py-4 bg-white/70 hover:bg-white text-primary rounded-2xl font-bold text-base transition-all border border-white/60 shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                >
+                  {loadingReview ? <Loader2 size={18} className="animate-spin text-indigo-600" /> : <ClipboardList size={18} className="text-indigo-600" />}
+                  Revisar Preguntas
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -410,25 +476,32 @@ export default function StudentQuizView({
             </div>
           </div>
 
-          <div className="flex justify-center gap-4">
-            <button
-              onClick={() => {
-                setPhase('WELCOME');
-                setResultData(null);
-                setAnswers({});
-              }}
-              className="px-8 py-3 bg-white/60 hover:bg-white/80 text-primary rounded-xl font-bold transition-colors border border-white/50 cursor-pointer"
-            >
-              Volver a Intentar
-            </button>
-            {resultData.questionsResult && (
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            {attempts.length < maxAttempts ? (
               <button
-                onClick={() => setPhase('REVIEW')}
-                className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-primary rounded-xl font-bold transition-colors shadow-lg shadow-indigo-900/20 cursor-pointer"
+                onClick={() => {
+                  setPhase('WELCOME');
+                  setResultData(null);
+                  setAnswers({});
+                }}
+                className="px-8 py-3 bg-white/60 hover:bg-white/80 text-primary rounded-xl font-bold transition-colors border border-white/50 cursor-pointer"
               >
-                Revisar Preguntas
+                Volver a Intentar ({attempts.length}/{maxAttempts})
               </button>
+            ) : (
+              <div className="px-6 py-3 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 rounded-xl text-sm font-semibold border border-amber-200 dark:border-amber-800">
+                Intentos agotados ({attempts.length}/{maxAttempts})
+              </div>
             )}
+            
+            <button
+              onClick={() => handleOpenReview('RESULTS')}
+              disabled={loadingReview}
+              className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors shadow-lg shadow-indigo-900/20 flex items-center gap-2 cursor-pointer disabled:opacity-60"
+            >
+              {loadingReview && <Loader2 size={18} className="animate-spin" />}
+              Revisar Preguntas
+            </button>
           </div>
         </div>
       )}
@@ -494,6 +567,13 @@ export default function StudentQuizView({
                         </div>
                       </div>
                     )}
+
+                    {!qRes.correctOptionId && (
+                      <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl text-xs text-amber-700 dark:text-amber-300 flex items-center gap-2">
+                        <AlertCircle size={16} className="shrink-0" />
+                        <span>La respuesta correcta y su retroalimentación se mostrarán al agotar tus intentos permitidos o al aprobar.</span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -502,10 +582,10 @@ export default function StudentQuizView({
             {/* Back Button */}
             <div className="flex justify-end pt-4 pb-12">
               <button
-                onClick={() => setPhase('RESULTS')}
-                className="px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-primary rounded-2xl font-bold text-lg transition-all shadow-xl shadow-indigo-900/20 flex items-center gap-3 cursor-pointer"
+                onClick={() => setPhase(reviewSourcePhase || 'RESULTS')}
+                className="px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-lg transition-all shadow-xl shadow-indigo-900/20 flex items-center gap-3 cursor-pointer"
               >
-                Volver al curso
+                Volver
                 <ChevronRight size={24} />
               </button>
             </div>
