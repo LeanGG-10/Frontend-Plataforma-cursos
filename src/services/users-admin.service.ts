@@ -1,15 +1,17 @@
 const API_URL = import.meta.env.PUBLIC_API_URL;
 
 class UsersAdminService {
-  private getAuthHeaders() {
-    if (typeof window === 'undefined') return {};
-    const token = localStorage.getItem('accessToken');
-    const sessionId = localStorage.getItem('activeSessionId');
-    return {
-      'Authorization': `Bearer ${token}`,
-      'x-session-id': sessionId || '',
-      'Content-Type': 'application/json'
+  private getAuthHeaders(): HeadersInit {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
     };
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken');
+      const sessionId = localStorage.getItem('activeSessionId');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      if (sessionId) headers['x-session-id'] = sessionId;
+    }
+    return headers;
   }
 
   async getAllUsers() {
