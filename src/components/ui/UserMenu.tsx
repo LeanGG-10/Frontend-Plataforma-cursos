@@ -87,7 +87,7 @@ export const UserMenu: React.FC = () => {
               <p className="text-[10px] uppercase tracking-widest text-secondary font-semibold">MI CUENTA</p>
             </div>
             <a href="/perfil" className="block px-4 py-2 text-sm text-tertiary/90 hover:bg-white/5 hover:text-white transition-colors">Mi perfil</a>
-            <a href="/mi-biblioteca" className="block px-4 py-2 text-sm text-tertiary/90 hover:bg-white/5 hover:text-white transition-colors">Mi biblioteca</a>
+            <a href="/library" className="block px-4 py-2 text-sm text-tertiary/90 hover:bg-white/5 hover:text-white transition-colors">Mi biblioteca</a>
             <a href="/wishlist" className="block px-4 py-2 text-sm text-tertiary/90 hover:bg-white/5 hover:text-white transition-colors">Lista de deseos</a>
           </div>
           {user?.role === 'PROFESOR' && (

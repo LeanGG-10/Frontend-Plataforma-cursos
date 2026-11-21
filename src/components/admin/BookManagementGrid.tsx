@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { isEditing } from '../../store/adminStore';
 import BookCardReact from '../BookCardReact';
-import { Plus, Loader2, Upload, FileText, CheckCircle2 } from 'lucide-react';
+import { Plus, Loader2, Upload, FileText, CheckCircle2, AlertTriangle } from 'lucide-react';
 import Modal from '../ui/Modal';
 import { bookService, type Book } from '../../services/book.service';
 import { categoryService, type Category } from '../../services/category.service';
@@ -33,6 +33,15 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
   
   // Category Management State
   const [newCatName, setNewCatName] = useState('');
@@ -192,8 +201,7 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
     }
   };
 
-  const handleAddSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const executeAdd = async (override: boolean = false) => {
     if (!files.cover || !files.pdf) {
       alert('Por favor selecciona tanto la portada como el archivo PDF.');
       return;
@@ -211,6 +219,9 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
       data.append('description', formData.description);
       data.append('cover', files.cover);
       data.append('pdf', files.pdf);
+      if (override) {
+        data.append('overrideDuplicateWarning', 'true');
+      }
 
       setUploadProgress(40);
       
@@ -221,15 +232,31 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
       setTimeout(async () => {
         await refreshBooks();
         setShowAddModal(false);
+        setDuplicateWarning({ isOpen: false, title: '', message: '' });
         resetForm();
       }, 500);
 
     } catch (error: any) {
+      if (error.isDuplicateWarning) {
+        setDuplicateWarning({
+          isOpen: true,
+          title: formData.title,
+          message:
+            error.message ||
+            `Ya existe un libro registrado con el título "${formData.title}".`,
+        });
+        return;
+      }
       alert(error.message || 'Error al añadir el libro');
     } finally {
       setLoading(false);
       setUploadProgress(0);
     }
+  };
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await executeAdd(false);
   };
 
   const resetForm = () => {
@@ -571,6 +598,62 @@ const BookManagementGrid: React.FC<Props> = ({ initialBooks }) => {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* MODAL: ADVERTENCIA DE TÍTULO DUPLICADO (ADMIN) */}
+      <Modal
+        isOpen={duplicateWarning.isOpen}
+        onClose={() =>
+          setDuplicateWarning((prev) => ({ ...prev, isOpen: false }))
+        }
+        title="Aviso: Título Existente"
+      >
+        <div className="space-y-4">
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+            <AlertTriangle
+              size={24}
+              className="text-amber-600 shrink-0 mt-0.5"
+            />
+            <div className="text-xs text-amber-900 space-y-2">
+              <p className="font-semibold text-sm">
+                Ya existe un libro registrado con el título «{duplicateWarning.title}»
+              </p>
+              <p>
+                En la plataforma pueden coexistir diferentes obras con el mismo
+                título (por tratarse de distintas ediciones, autores o
+                contenidos independientes con identificadores propios).
+              </p>
+              <p className="font-semibold">
+                ¿Deseas continuar con la publicación de todas formas?
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-secondary/15">
+            <button
+              type="button"
+              onClick={() =>
+                setDuplicateWarning((prev) => ({ ...prev, isOpen: false }))
+              }
+              className="px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-primary/70 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              Modificar Título
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => executeAdd(true)}
+              className="px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-secondary text-primary hover:bg-white hover:text-primary transition-all shadow-md flex items-center gap-2 cursor-pointer font-bold"
+            >
+              {loading ? (
+                <Loader2 size={16} className="animate-spin text-primary" />
+              ) : (
+                <CheckCircle2 size={16} />
+              )}
+              <span>Sí, continuar y publicar</span>
+            </button>
+          </div>
+        </div>
       </Modal>
 
       {/* Category Management Modal */}

@@ -1,0 +1,41 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/ui/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import { UnifiedLibrary } from '../components/library/UnifiedLibrary';
+---
+
+<Layout title="Mi Biblioteca | Élite Educativa">
+  <Navbar />
+  
+  <main class="pt-[72px] min-h-screen bg-[#F7F2E8]">
+    <!-- Hero Header -->
+    <section class="bg-primary text-secondary py-16 px-6 text-center border-b border-secondary/20">
+      <div class="container mx-auto max-w-4xl">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-4 italic">
+          Mi Biblioteca
+        </h1>
+        <p class="text-base md:text-lg font-body text-secondary/80 max-w-2xl mx-auto">
+          Gestiona y accede a todos tus cursos en progreso y libros adquiridos en un único espacio unificado.
+        </p>
+      </div>
+    </section>
+
+    <!-- Contenido de Biblioteca -->
+    <section class="py-12 md:py-16">
+      <div class="max-w-[95%] mx-auto">
+        <UnifiedLibrary client:load />
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  import { authService } from '../services/auth.service';
+  const user = authService.getUser();
+  if (!user) {
+    window.location.href = '/login';
+  }
+</script>

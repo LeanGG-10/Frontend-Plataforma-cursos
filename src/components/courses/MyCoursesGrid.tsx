@@ -87,15 +87,17 @@ export const MyCoursesGrid: React.FC = () => {
               </div>
             )}
             
-            <span className="absolute top-4 left-4 bg-[#C9A44A]/90 backdrop-blur-sm text-[#0F172A] px-3 py-1 rounded-[6px] text-[10px] font-bold uppercase tracking-wider shadow-sm">
-              {course.categoryName || 'Curso'}
-            </span>
-            
-            <span className={`absolute top-4 right-4 backdrop-blur-sm text-white px-3 py-1 rounded-[6px] text-[10px] font-bold uppercase tracking-wider shadow-sm ${
+            <span className={`absolute top-3.5 right-3.5 backdrop-blur-sm text-white px-2.5 py-1 rounded-[6px] text-[10px] font-bold uppercase tracking-wider shadow-sm ${
               course.status === 'PUBLISHED' ? 'bg-green-500/90' : 
+              course.status === 'PENDING_REVIEW' ? 'bg-amber-500/90' :
+              course.status === 'REJECTED' ? 'bg-rose-500/90' :
               course.status === 'DRAFT' ? 'bg-amber-500/90' : 'bg-gray-500/90'
             }`}>
               {course.status || 'PUBLISHED'}
+            </span>
+
+            <span className="absolute bottom-3.5 left-3.5 bg-[#C9A44A]/90 backdrop-blur-sm text-[#0F172A] px-2.5 py-1 rounded-[6px] text-[10px] font-bold uppercase tracking-wider shadow-sm max-w-[70%] truncate">
+              {course.categoryName || 'Curso'}
             </span>
           </div>
           

@@ -4,6 +4,7 @@ import Navbar from '../../components/ui/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import { formatPrice } from '../../utils/format';
 import PayPalPaymentButton from '../../components/PayPalPaymentButton.astro';
+import AdminBookActionBar from '../../components/courses/AdminBookActionBar';
 
 const { id } = Astro.params;
 const API_URL = import.meta.env.PUBLIC_API_URL ;
@@ -123,6 +124,8 @@ if (!book) return Astro.redirect('/404');
       </div>
     </div>
   </main>
+
+  <AdminBookActionBar client:load bookId={book.id} currentStatus={book.status} />
 
   <Footer />
 </Layout>
